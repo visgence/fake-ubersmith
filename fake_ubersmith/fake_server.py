@@ -20,7 +20,7 @@ from flask import request, Flask
 
 class FlaskServer(threading.Thread):
     def __init__(self, name, port=9124, *args, **kwargs):
-        threading.Thread.__init__(self, *args, **kwargs)
+        super(FlaskServer).__init__(*args, **kwargs)
 
         self.server = Flask(name)
         self.port = port
