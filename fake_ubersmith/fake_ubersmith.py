@@ -41,7 +41,7 @@ class FakeUbersmithError(object):
 class FakeUbersmith(FlaskServer):
 
     def __init__(self, port=9131, *args, **kwargs):
-        super(FakeUbersmith, self).__init__(self, "fake-ubersmith", port, *args, **kwargs)
+        super(FakeUbersmith, self).__init__("fake-ubersmith", port, *args, **kwargs)
 
         self.post_methods = {}
         self.service_plans = []
