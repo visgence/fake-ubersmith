@@ -1,0 +1,27 @@
+language: python
+
+dist: trusty
+sudo: required
+
+matrix:
+  include:
+    - python: "2.7"
+      env:
+        - TOX_ENV=py27
+    - python: "3.4"
+      env:
+        - TOX_ENV=py34
+    - python: "3.5"
+      env:
+        - TOX_ENV=py35
+    - python: "flake8"
+      env:
+        - TOX_ENV=flake8
+
+install:
+  - pip install tox
+  - pip install -r requirements.txt
+  - pip install -r test-requirements.txt
+
+script:
+  - tox -e $TOX_ENV
