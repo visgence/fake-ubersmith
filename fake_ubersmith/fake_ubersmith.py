@@ -15,7 +15,8 @@
 import json
 
 from flask import make_response, request
-from flask_server import FlaskServer
+
+from fake_ubersmith.fake_server import FlaskServer
 
 
 def record(method):
@@ -40,7 +41,7 @@ class FakeUbersmithError(object):
 class FakeUbersmith(FlaskServer):
 
     def __init__(self, port=9131, *args, **kwargs):
-        FlaskServer.__init__(self, "fake-ubersmith", port, *args, **kwargs)
+        super(FakeUbersmith, self).__init__(self, "fake-ubersmith", port, *args, **kwargs)
 
         self.post_methods = {}
         self.service_plans = []

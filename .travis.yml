@@ -7,16 +7,13 @@ matrix:
   include:
     - python: "2.7"
       env:
-        - TOX_ENV=py27
+        - TOX_ENV=py27,flake8
     - python: "3.4"
       env:
-        - TOX_ENV=py34
+        - TOX_ENV=py34,flake8
     - python: "3.5"
       env:
-        - TOX_ENV=py35
-    - python: "flake8"
-      env:
-        - TOX_ENV=flake8
+        - TOX_ENV=py35,flake8
 
 install:
   - pip install tox
