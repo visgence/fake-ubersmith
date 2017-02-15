@@ -28,7 +28,7 @@ class FlaskServer(threading.Thread):
         self.server.add_url_rule('/__shutdown', view_func=shutdown)
 
     def run(self):
-        self.server.run(port=self.port)
+        self.server.run(host="0.0.0.0", port=self.port)
 
     def stop(self):
         requests.get('http://localhost:{0}/__shutdown'.format(self.port))

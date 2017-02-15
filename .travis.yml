@@ -3,6 +3,9 @@ language: python
 dist: trusty
 sudo: required
 
+services:
+  - docker
+
 matrix:
   include:
     - python: "2.7"
