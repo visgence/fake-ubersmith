@@ -2,7 +2,20 @@
 
 Fake-ubersmith
 =============
+This library is a web server representing a fake Übersmith where you can register api calls and response that can be used
+for integration test purposes.
 
+# Command line usage
+```
+pip install fake-ubersmith
+fake-ubersmith
+```
+
+# Docker usage
+```
+docker pull internap/fake-ubersmith:latest
+docker run -d -p 8000:9131 fake-ubersmith
+```
 
 # License
 
