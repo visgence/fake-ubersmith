@@ -17,6 +17,12 @@ matrix:
     - python: '3.5'
       env:
         - TOX_ENV=py35,flake8
+    - env:
+        - DOCKER_IMAGE=internap/fake-ubersmith:latest
+      script:
+        - docker build . -t ${DOCKER_IMAGE}
+        - docker run -d --name fake-ubersmith ${DOCKER_IMAGE}
+        - docker inspect -f {{.State.Running}} fake-ubersmith
 
 install:
   - pip install tox
