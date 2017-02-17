@@ -10,7 +10,8 @@ class UbersmithBase(Base):
     def hook_to(self, server):
         self.app = server
         self.app.add_url_rule(
-            '/api/2.0/', view_func=self._route_method,
+            '/api/2.0/',
+            view_func=self._route_method,
             methods=["POST"]
         )
 
