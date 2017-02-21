@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import ABCMeta, abstractmethod
 
-
-class Base(metaclass=ABCMeta):
-    def __init__(self, data_store):
-        self.data_store = data_store
-        self.app = None
-        self.methods = {}
-        self.records = {}
-
-    @abstractmethod
-    def hook_to(self, entity):
-        pass
+class DataStore(object):
+    def __init__(self):
+        self.credit_cards = []
+        self.countries = {}
+        self.clients = []
+        self.coupons = []
+        self.order = {}
+        self.order_submit = {}
+        self.order_cancel = {}
+        self.service_plans = []
+        self.service_plans_list = None

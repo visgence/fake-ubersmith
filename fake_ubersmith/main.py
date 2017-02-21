@@ -14,6 +14,7 @@
 
 from flask.app import Flask
 
+from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.administrative_local import AdministrativeLocal
 from fake_ubersmith.api.methods.client import Client
 from fake_ubersmith.api.methods.order import Order
@@ -24,13 +25,15 @@ from fake_ubersmith.api.ubersmith import UbersmithBase
 port = 9131
 
 app = Flask('fake_ubersmith')
-base_uber_api = UbersmithBase()
 
-AdministrativeLocal().hook_to(app)
+data_store = DataStore()
+base_uber_api = UbersmithBase(data_store)
 
-Uber().hook_to(base_uber_api)
-Order().hook_to(base_uber_api)
-Client().hook_to(base_uber_api)
+AdministrativeLocal(data_store).hook_to(app)
+
+Uber(data_store).hook_to(base_uber_api)
+Order(data_store).hook_to(base_uber_api)
+Client(data_store).hook_to(base_uber_api)
 
 base_uber_api.hook_to(app)
 

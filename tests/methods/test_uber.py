@@ -17,6 +17,7 @@ from unittest.mock import patch
 
 from werkzeug.datastructures import ImmutableMultiDict
 
+from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.uber import Uber
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
 
@@ -24,11 +25,12 @@ from fake_ubersmith.api.ubersmith import FakeUbersmithError
 class TestUberModule(unittest.TestCase):
 
     def setUp(self):
-        self.uber = Uber()
+        self.data_store = DataStore()
+        self.uber = Uber(self.data_store)
 
     @patch('fake_ubersmith.api.methods.uber.response')
     def test_service_plan_get_returns_if_service_plan_found(self, m_resp):
-        self.uber.service_plans = [{"plan_id": 1}]
+        self.data_store.service_plans = [{"plan_id": 1}]
 
         m_resp.return_value = '{"data": {"plan_id": 1}, "error_code": null, ' \
                               '"error_message": "", "status": true}'
@@ -43,7 +45,7 @@ class TestUberModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.uber.response')
     def test_service_plan_get_errs_if_service_plan_not_found(self, m_resp):
-        self.uber.service_plans = [{"plan_id": 1}]
+        self.data_store.service_plans = [{"plan_id": 1}]
 
         m_resp.return_value = '{"data": None, "error_code": 3, ' \
                               '"error_message": "No Service Plan found", ' \
@@ -75,8 +77,7 @@ class TestUberModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.uber.response')
     def test_service_plan_list_returns_all_plans(self, m_resp):
-
-        self.uber.service_plans_list = {
+        self.data_store.service_plans_list = {
             "1": {"code": "42"}, "2": {"code": "99"}
         }
         m_resp.return_value = '{"data": {"1": {"code": "42"}, ' \
@@ -98,8 +99,7 @@ class TestUberModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.uber.response')
     def test_service_plan_list_returns_plans_matching_code(self, m_resp):
-
-        self.uber.service_plans_list = {
+        self.data_store.service_plans_list = {
             "1": {"plan_id": "1", "code": "42"},
             "2": {"plan_id": "1", "code": "99"}
         }
@@ -119,3 +119,66 @@ class TestUberModule(unittest.TestCase):
         m_resp.assert_called_once_with(
             data={"1": {"plan_id": "1", "code": "42"}}
         )
+
+    @patch('fake_ubersmith.api.methods.uber.response')
+    def test_check_login_succesfully(self, m_resp):
+        self.data_store.clients = [
+            {
+                'clientid': '0',
+                'first': 'John',
+                'last': 'Smith',
+                'email': 'john.smith@invalid.com',
+                'uber_login': 'john',
+                'uber_pass': 'smith',
+            }
+        ]
+
+        m_resp.return_value = '{"data": {"client_id": "0"}, ' \
+                              '"error_code": null, ' \
+                              '"error_message": "", ' \
+                              '"status": true' \
+                              '}'
+
+        self.assertEqual(
+            self.uber.check_login(
+                form_data={"login": "john", "pass": "smith"}
+            ),
+            '{"data": {"client_id": "0"}, '
+            '"error_code": null, "error_message": "", "status": true}'
+        )
+
+        m_resp.assert_called_once_with(
+            data={"client_id": "0"}
+        )
+
+    @patch('fake_ubersmith.api.methods.uber.response')
+    def test_check_login_failed(self, m_resp):
+        self.data_store.clients = [
+            {
+                'clientid': '0',
+                'first': 'John',
+                'last': 'Smith',
+                'email': 'john.smith@invalid.com',
+                'uber_login': 'john',
+                'uber_pass': 'smith',
+            }
+        ]
+
+        m_resp.return_value = '{"data": "", ' \
+                              '"error_code": 3, ' \
+                              '"error_message": "Invalid login or password.", ' \
+                              '"status": true' \
+                              '}'
+
+        self.assertEqual(
+            self.uber.check_login(
+                form_data={"login": "john", "pass": "doe"}
+            ),
+            '{"data": "", '
+            '"error_code": 3, '
+            '"error_message": '
+            '"Invalid login or password.", '
+            '"status": true}'
+        )
+
+        m_resp.assert_called_once_with(error_code=3, message="Invalid login or password.")

@@ -4,8 +4,8 @@ from fake_ubersmith.api.base import Base
 
 
 class UbersmithBase(Base):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data_store):
+        super().__init__(data_store)
 
     def hook_to(self, server):
         self.app = server
