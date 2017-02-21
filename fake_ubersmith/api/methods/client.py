@@ -50,6 +50,18 @@ class Client(Base):
             ubersmith_method='client.get',
             function=self.client_get
         )
+        entity.register_endpoints(
+            ubersmith_method='client.add',
+            function=self.client_add
+        )
+
+    def client_add(self, form_data):
+        client_id = len(self.clients)
+
+        form_data["clientid"] = client_id
+        self.clients.append(form_data)
+
+        return response(data=str(client_id))
 
     def client_get(self, form_data):
         client_id = form_data["client_id"]

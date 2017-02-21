@@ -24,6 +24,28 @@ class TestClientModule(unittest.TestCase):
         self.client = Client()
 
     @patch('fake_ubersmith.api.methods.client.response')
+    def test_client_add_creates_a_client(self, m_resp):
+        m_resp.return_value = '{"data": "0", ' \
+                              '"error_code": null, ' \
+                              '"error_message": "", ' \
+                              '"status": true}'
+
+        self.assertEqual(
+            self.client.client_add(
+                form_data={
+                    'first': 'John',
+                    'last': 'Smith',
+                    'email': 'john.smith@invalid.com',
+                    'uber_login': 'john',
+                    'uber_pass': 'smith',
+                }
+            ),
+            m_resp.return_value
+        )
+
+        m_resp.assert_called_once_with(data="0")
+
+    @patch('fake_ubersmith.api.methods.client.response')
     def test_client_get_returns_successfully(self, m_resp):
         self.client.clients = [{"clientid": "1"}]
 
