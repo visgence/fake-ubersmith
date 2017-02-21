@@ -19,7 +19,7 @@ from flask import make_response
 
 def response(data=None, error_code=None, message=""):
     r = json.dumps({
-        "status": True if error_code else False,
+        "status": False if error_code else True,
         "error_code": error_code,
         "error_message": message,
         "data": data
