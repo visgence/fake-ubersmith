@@ -18,15 +18,8 @@ from fake_ubersmith.api.utils.response import response
 
 
 class Order(Base):
-    def __init__(self):
-        super().__init__()
-
-        self.records = {}
-
-        self.coupons = []
-        self.order = {}
-        self.order_submit = {}
-        self.order_cancel = {}
+    def __init__(self, data_store):
+        super().__init__(data_store)
 
     def hook_to(self, entity):
         entity.register_endpoints(
@@ -53,7 +46,7 @@ class Order(Base):
     def coupon_get(self, form_data):
         coupon = next(
             (
-                cf for cf in self.coupons
+                cf for cf in self.data_store.coupons
                 if cf["coupon"]["coupon_code"] == form_data["coupon_code"]
             ),
             None
@@ -68,7 +61,7 @@ class Order(Base):
     # TODO - (wajdi) Determine if order_queue_id is correct attribute per doc
     @record(method='order.create')
     def create_order(self, form_data):
-        order = self.order.get(form_data['order_id'])
+        order = self.data_store.order.get(form_data['order_id'])
         if isinstance(order, FakeUbersmithError):
             return response(
                 error_code=order.code, message=order.message
@@ -81,7 +74,7 @@ class Order(Base):
 
     @record(method='order.submit')
     def submit_order(self, form_data):
-        order_submit = self.order_submit.get(form_data['order_id'])
+        order_submit = self.data_store.order_submit.get(form_data['order_id'])
         if isinstance(order_submit, FakeUbersmithError):
             return response(
                 error_code=order_submit.code, message=order_submit.message
@@ -90,7 +83,7 @@ class Order(Base):
 
     @record(method='order.cancel')
     def cancel_order(self, form_data):
-        order_cancel = self.order_cancel.get(form_data['order_id'])
+        order_cancel = self.data_store.order_cancel.get(form_data['order_id'])
         if isinstance(order_cancel, FakeUbersmithError):
             return response(
                 error_code=order_cancel.code, message=order_cancel.message

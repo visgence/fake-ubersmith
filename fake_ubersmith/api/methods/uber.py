@@ -18,12 +18,9 @@ from fake_ubersmith.api.utils.response import response
 
 
 class Uber(Base):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data_store):
+        super().__init__(data_store)
 
-        self.records = {}
-        self.service_plans = []
-        self.service_plans_list = None
         self.service_plan_error = None
 
     def hook_to(self, entity):
@@ -35,6 +32,17 @@ class Uber(Base):
             ubersmith_method='uber.service_plan_list',
             function=self.service_plan_list
         )
+        entity.register_endpoints(
+            ubersmith_method='uber.check_login',
+            function=self.check_login
+        )
+
+    def check_login(self, form_data):
+        for client in self.data_store.clients:
+            if client['uber_login'] == form_data['login'] and client['uber_pass'] == form_data['pass']:
+                return response(data={"client_id": client['clientid']})
+
+        return response(error_code=3, message="Invalid login or password.")
 
     @record(method='plan.get')
     def service_plan_get(self, form_data):
@@ -46,7 +54,7 @@ class Uber(Base):
 
         service_plan = next(
             (
-                plan for plan in self.service_plans
+                plan for plan in self.data_store.service_plans
                 if plan["plan_id"] == form_data["plan_id"]
             ),
             None
@@ -67,8 +75,8 @@ class Uber(Base):
             return response(
                 data={
                     plan['plan_id']: plan
-                    for plan in self.service_plans_list.values()
+                    for plan in self.data_store.service_plans_list.values()
                     if plan['code'] == plan_code
                 }
             )
-        return response(data=self.service_plans_list)
+        return response(data=self.data_store.service_plans_list)

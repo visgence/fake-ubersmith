@@ -17,13 +17,15 @@ from unittest.mock import patch
 
 from werkzeug.datastructures import ImmutableMultiDict
 
+from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.order import Order
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
 
 
 class TestOrderModule(unittest.TestCase):
     def setUp(self):
-        self.order = Order()
+        self.data_store = DataStore()
+        self.order = Order(self.data_store)
 
     @patch('fake_ubersmith.api.methods.order.response')
     def test_coupon_get_returns_successfully(self, m_resp):
@@ -68,7 +70,7 @@ class TestOrderModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.order.response')
     def test_create_order_succeeds(self, m_resp):
-        self.order.order = {"100": {"order_id": "100"}}
+        self.data_store.order = {"100": {"order_id": "100"}}
 
         m_resp.return_value = '{"data": {"order_id": "100"}, ' \
                               '"error_code": null, ' \
@@ -86,7 +88,7 @@ class TestOrderModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.order.response')
     def test_create_order_errs(self, m_resp):
-        self.order.order = {
+        self.data_store.order = {
             "100": FakeUbersmithError(code=999, message='epic fail')
         }
 
@@ -111,7 +113,7 @@ class TestOrderModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.order.response')
     def test_submit_order_is_successful(self, m_resp):
-        self.order.order_submit = {"100": {"order_id": "100"}}
+        self.data_store.order_submit = {"100": {"order_id": "100"}}
 
         m_resp.return_value = '{"data": {"order_id": "100"}, ' \
                               '"error_code": null, ' \
@@ -129,7 +131,7 @@ class TestOrderModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.order.response')
     def test_submit_order_errs(self, m_resp):
-        self.order.order_submit = {
+        self.data_store.order_submit = {
             "100": FakeUbersmithError(code=999, message='epic fail')
         }
 
@@ -149,7 +151,7 @@ class TestOrderModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.order.response')
     def test_cancel_order_is_successful(self, m_resp):
-        self.order.order_cancel = {"100": {"order_id": "100"}}
+        self.data_store.order_cancel = {"100": {"order_id": "100"}}
 
         m_resp.return_value = '{"data": {"order_id": "100"}, ' \
                               '"error_code": null, ' \
@@ -167,7 +169,7 @@ class TestOrderModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.order.response')
     def test_cancel_order_errs(self, m_resp):
-        self.order.order_cancel = {
+        self.data_store.order_cancel = {
             "100": FakeUbersmithError(code=999, message='epic fail')
         }
 

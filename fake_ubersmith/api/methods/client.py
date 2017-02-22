@@ -18,14 +18,9 @@ from fake_ubersmith.api.utils.response import response
 
 
 class Client(Base):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data_store):
+        super().__init__(data_store)
 
-        self.records = {}
-
-        self.credit_cards = []
-        self.countries = {}
-        self.clients = []
         self.credit_card_response = 1
         self.credit_card_delete_response = True
 
@@ -56,10 +51,10 @@ class Client(Base):
         )
 
     def client_add(self, form_data):
-        client_id = len(self.clients)
+        client_id = len(self.data_store.clients)
 
         form_data["clientid"] = client_id
-        self.clients.append(form_data)
+        self.data_store.clients.append(form_data)
 
         return response(data=str(client_id))
 
@@ -67,7 +62,7 @@ class Client(Base):
         client_id = form_data["client_id"]
         client = next(
             (
-                client for client in self.clients
+                client for client in self.data_store.clients
                 if client["clientid"] == client_id
             ),
             None
@@ -103,14 +98,14 @@ class Client(Base):
         if "billing_info_id" in form_data:
             return response(
                 data={
-                    cc["billing_info_id"]: cc for cc in self.credit_cards
+                    cc["billing_info_id"]: cc for cc in self.data_store.credit_cards
                     if cc["billing_info_id"] == form_data["billing_info_id"]
                 }
             )
         elif "client_id" in form_data:
             return response(
                 data={
-                    cc["billing_info_id"]: cc for cc in self.credit_cards
+                    cc["billing_info_id"]: cc for cc in self.data_store.credit_cards
                     if cc["clientid"] == form_data["client_id"]
                 }
             )

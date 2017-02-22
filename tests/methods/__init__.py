@@ -11,17 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from abc import ABCMeta, abstractmethod
-
-
-class Base(metaclass=ABCMeta):
-    def __init__(self, data_store):
-        self.data_store = data_store
-        self.app = None
-        self.methods = {}
-        self.records = {}
-
-    @abstractmethod
-    def hook_to(self, entity):
-        pass

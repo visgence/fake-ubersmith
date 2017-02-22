@@ -15,13 +15,15 @@
 import unittest
 from unittest.mock import patch
 
+from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.client import Client
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
 
 
 class TestClientModule(unittest.TestCase):
     def setUp(self):
-        self.client = Client()
+        self.data_store = DataStore()
+        self.client = Client(self.data_store)
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_add_creates_a_client(self, m_resp):
@@ -47,7 +49,7 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_get_returns_successfully(self, m_resp):
-        self.client.clients = [{"clientid": "1"}]
+        self.data_store.clients = [{"clientid": "1"}]
 
         m_resp.return_value = '{"data": {"clientid": "1"}, ' \
                               '"error_code": null, ' \
@@ -63,7 +65,7 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_get_errs_when_no_match(self, m_resp):
-        self.client.clients = [{"clientid": "100"}]
+        self.data_store.clients = [{"clientid": "100"}]
 
         m_resp.return_value = '{"data": None, ' \
                               '"error_code": 1, ' \
@@ -82,7 +84,6 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_cc_add_is_successful(self, m_resp):
-
         m_resp.return_value = '{"data": "1", ' \
                               '"error_code": null, ' \
                               '"error_message": "", "status": true}'
@@ -113,7 +114,6 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_cc_update_is_successful(self, m_resp):
-
         m_resp.return_value = '{"data": True, ' \
                               '"error_code": null, ' \
                               '"error_message": "", "status": true}'
@@ -144,7 +144,7 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_cc_info_with_billing_info_id(self, m_resp):
-        self.client.credit_cards = [{"billing_info_id": "123"}]
+        self.data_store.credit_cards = [{"billing_info_id": "123"}]
 
         m_resp.return_value = '{"data": {"123": {"billing_info_id": "123"}}, ' \
                               '"error_code": null, ' \
@@ -160,7 +160,7 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_cc_info_with_client_id(self, m_resp):
-        self.client.credit_cards = [
+        self.data_store.credit_cards = [
             {
                 "clientid": "1",
                 "billing_info_id": "123"
@@ -184,7 +184,7 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_cc_info_fails(self, m_resp):
-        self.client.credit_cards = [
+        self.data_store.credit_cards = [
             {
                 "clientid": "1",
                 "billing_info_id": "123"
@@ -213,7 +213,6 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_cc_delete_is_successful(self, m_resp):
-
         m_resp.return_value = '{"data": "True", ' \
                               '"error_code": null, ' \
                               '"error_message": "", "status": true}'
