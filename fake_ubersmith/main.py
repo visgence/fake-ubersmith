@@ -29,7 +29,7 @@ app = Flask('fake_ubersmith')
 data_store = DataStore()
 base_uber_api = UbersmithBase(data_store)
 
-AdministrativeLocal(data_store).hook_to(app)
+AdministrativeLocal().hook_to(app)
 
 Uber(data_store).hook_to(base_uber_api)
 Order(data_store).hook_to(base_uber_api)
