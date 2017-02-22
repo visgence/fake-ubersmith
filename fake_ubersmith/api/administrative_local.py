@@ -14,6 +14,7 @@
 from flask import request
 
 from fake_ubersmith.api.base import Base
+from fake_ubersmith.api.utils.response import response
 
 
 class AdministrativeLocal(Base):
@@ -30,3 +31,4 @@ class AdministrativeLocal(Base):
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
         func()
+        return response(data="Shutting down server...")

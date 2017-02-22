@@ -58,7 +58,7 @@ class Order(Base):
             )
 
     def create_order(self, form_data):
-        order = self.data_store.order.get(form_data['order_id'])
+        order = self.data_store.order.get(form_data['order_queue_id'])
         if isinstance(order, FakeUbersmithError):
             return response(
                 error_code=order.code, message=order.message

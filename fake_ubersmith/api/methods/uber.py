@@ -38,7 +38,9 @@ class Uber(Base):
 
     def check_login(self, form_data):
         data = self._get_client(form_data['login'], form_data['pass'])
-        return response(data=data) if data else response(error_code=3, message="Invalid login or password.")
+        return response(data=data) if data else response(
+            error_code=3, message="Invalid login or password."
+        )
 
     def service_plan_get(self, form_data):
         if isinstance(self.service_plan_error, FakeUbersmithError):

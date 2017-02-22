@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import json
 import unittest
-from unittest.mock import patch
+
+from flask import Flask
 
 from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.client import Client
-from fake_ubersmith.api.ubersmith import FakeUbersmithError
+from fake_ubersmith.api.ubersmith import FakeUbersmithError, UbersmithBase
 
 
 class TestClientModule(unittest.TestCase):
@@ -25,163 +26,200 @@ class TestClientModule(unittest.TestCase):
         self.data_store = DataStore()
         self.client = Client(self.data_store)
 
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_add_creates_a_client(self, m_resp):
-        m_resp.return_value = '{"data": "1", ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", ' \
-                              '"status": true}'
+        self.app = Flask(__name__)
+        self.base_uber_api = UbersmithBase(self.data_store)
 
-        self.assertEqual(
-            self.client.client_add(
-                form_data={
-                    'first': 'John',
-                    'last': 'Smith',
-                    'email': 'john.smith@invalid.com',
-                    'uber_login': 'john',
-                    'uber_pass': 'smith',
+        self.client.hook_to(self.base_uber_api)
+        self.base_uber_api.hook_to(self.app)
+
+    def test_client_add_creates_a_client(self):
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.add",
+                    "first": "John",
+                    "last": "Smith",
+                    "email": "john.smith@invalid.com",
+                    "uber_login": "john",
+                    "uber_pass": "smith"
                 }
-            ),
-            m_resp.return_value
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "1",
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
         )
 
-        m_resp.assert_called_once_with(data="1")
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_get_returns_successfully(self, m_resp):
+    def test_client_get_returns_successfully(self):
         self.data_store.clients = [{"clientid": "1"}]
 
-        m_resp.return_value = '{"data": {"clientid": "1"}, ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", "status": true}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.get", "client_id": "1"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_get(form_data={'client_id': '1'}),
-            '{"data": {"clientid": "1"}, "error_code": null, '
-            '"error_message": "", "status": true}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": {"clientid": "1"},
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
         )
 
-        m_resp.assert_called_once_with(data={"clientid": "1"})
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_get_errs_when_no_match(self, m_resp):
+    def test_client_get_errs_when_no_match(self):
         self.data_store.clients = [{"clientid": "100"}]
 
-        m_resp.return_value = '{"data": None, ' \
-                              '"error_code": 1, ' \
-                              '"error_message": ' \
-                              '"Client ID \'1\' not found.", "status": false}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.get", "client_id": "1"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_get(form_data={'client_id': '1'}),
-            '{"data": None, "error_code": 1, '
-            '"error_message": "Client ID \'1\' not found.", "status": false}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 1,
+                "error_message": "Client ID '1' not found.",
+                "status": False
+            }
         )
 
-        m_resp.assert_called_once_with(
-           error_code=1, message="Client ID '1' not found."
-        )
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_contact_add_creates_a_contact(self, m_resp):
-        m_resp.return_value = '{"data": "1", ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", ' \
-                              '"status": true}'
-
-        self.assertEqual(
-            self.client.contact_add(
-                form_data={
-                    'client_id': 1,
-                    'real_name': 'John Doe',
-                    'email': 'john.doe@invalid.com',
-                    'login': 'john',
-                    'password': 'doe',
+    def test_client_contact_add_creates_a_contact(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_add",
+                    "first": "John",
+                    "last": "Smith",
+                    "email": "john.smith@invalid.com",
+                    "uber_login": "john",
+                    "uber_pass": "smith"
                 }
-            ),
-            m_resp.return_value
-        )
+            )
 
-        m_resp.assert_called_once_with(data="1")
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_add_is_successful(self, m_resp):
-        m_resp.return_value = '{"data": "1", ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", "status": true}'
-
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_add(form_data={'client_id': '1'}),
-            '{"data": "1", "error_code": null, '
-            '"error_message": "", "status": true}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "1",
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
         )
 
-        m_resp.assert_called_once_with(data=1)
+    def test_client_cc_add_is_successful(self):
 
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_add_fails_returns_error(self, m_resp):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_add", "client_id": "1"}
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": 1,
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
+        )
+
+    def test_client_cc_add_fails_returns_error(self):
         self.client.credit_card_response = FakeUbersmithError(999, 'oh fail')
 
-        m_resp.return_value = '{"data": None, ' \
-                              '"error_code": "999", ' \
-                              '"error_message": "oh fail", "status": false}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_add", "client_id": "1"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_add(form_data={'client_id': '1'}),
-            '{"data": None, "error_code": "999", '
-            '"error_message": "oh fail", "status": false}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 999,
+                "error_message": "oh fail",
+                "status": False}
         )
 
-        m_resp.assert_called_once_with(error_code=999, message='oh fail')
+    def test_client_cc_update_is_successful(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_update", "client_id": "1"}
+            )
 
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_update_is_successful(self, m_resp):
-        m_resp.return_value = '{"data": True, ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", "status": true}'
-
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_add(form_data={'client_id': '1'}),
-            '{"data": True, "error_code": null, '
-            '"error_message": "", "status": true}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": True,
+                "error_code": None,
+                "error_message": "",
+                "status": True
+             }
         )
 
-        m_resp.assert_called_once_with(data=True)
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_update_fails_returns_error(self, m_resp):
+    def test_client_cc_update_fails_returns_error(self):
         self.client.credit_card_response = FakeUbersmithError(999, 'oh fail')
 
-        m_resp.return_value = '{"data": None, ' \
-                              '"error_code": "999", ' \
-                              '"error_message": "oh fail", "status": false}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_update", "client_id": "1"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_update(form_data={'client_id': '1'}),
-            '{"data": None, "error_code": "999", '
-            '"error_message": "oh fail", "status": false}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 999,
+                "error_message": "oh fail",
+                "status": False
+             }
         )
 
-        m_resp.assert_called_once_with(error_code=999, message='oh fail')
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_info_with_billing_info_id(self, m_resp):
+    def test_client_cc_info_with_billing_info_id(self):
         self.data_store.credit_cards = [{"billing_info_id": "123"}]
 
-        m_resp.return_value = '{"data": {"123": {"billing_info_id": "123"}}, ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", "status": true}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_info", "billing_info_id": "123"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_info(form_data={'billing_info_id': '123'}),
-            '{"data": {"123": {"billing_info_id": "123"}}, "error_code": null, '
-            '"error_message": "", "status": true}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": {"123": {"billing_info_id": "123"}},
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
         )
 
-        m_resp.assert_called_once_with(data={"123": {"billing_info_id": "123"}})
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_info_with_client_id(self, m_resp):
+    def test_client_cc_info_with_client_id(self):
         self.data_store.credit_cards = [
             {
                 "clientid": "1",
@@ -189,23 +227,24 @@ class TestClientModule(unittest.TestCase):
             }
         ]
 
-        m_resp.return_value = '{"data": {"123": {"clientid": "1", ' \
-                              '"billing_info_id": "123"}}, ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", "status": true}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_info", "client_id": "1"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_info(form_data={'client_id': '1'}),
-            '{"data": {"123": {"clientid": "1", "billing_info_id": "123"}}, '
-            '"error_code": null, "error_message": "", "status": true}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": {"123": {"billing_info_id": "123", "clientid": "1"}},
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
         )
 
-        m_resp.assert_called_once_with(
-            data={"123": {"clientid": "1", "billing_info_id": "123"}}
-        )
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_info_fails(self, m_resp):
+    def test_client_cc_info_fails(self):
         self.data_store.credit_cards = [
             {
                 "clientid": "1",
@@ -213,54 +252,60 @@ class TestClientModule(unittest.TestCase):
             }
         ]
 
-        m_resp.return_value = '{"data": None, ' \
-                              '"error_code": "1", ' \
-                              '"error_message": ' \
-                              '"request failed: ' \
-                              'client_id parameter not supplied", ' \
-                              '"status": false}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_info", "bogus": "thing"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_info(form_data={'bogus': 'thing'}),
-            '{"data": None, "error_code": "1", '
-            '"error_message": '
-            '"request failed: client_id parameter not supplied", '
-            '"status": false}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 1,
+                "error_message":
+                    "request failed: client_id parameter not supplied",
+                "status": False
+            }
         )
 
-        m_resp.assert_called_once_with(
-            error_code=1,
-            message='request failed: client_id parameter not supplied'
-        )
+    def test_client_cc_delete_is_successful(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_delete", "client_id": "1"}
+            )
 
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_delete_is_successful(self, m_resp):
-        m_resp.return_value = '{"data": "True", ' \
-                              '"error_code": null, ' \
-                              '"error_message": "", "status": true}'
-
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_add(form_data={'client_id': '1'}),
-            '{"data": "True", "error_code": null, '
-            '"error_message": "", "status": true}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": True,
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
         )
 
-        m_resp.assert_called_once_with(data=True)
-
-    @patch('fake_ubersmith.api.methods.client.response')
-    def test_client_cc_delete_fails(self, m_resp):
+    def test_client_cc_delete_fails(self):
         self.client.credit_card_delete_response = FakeUbersmithError(
             999, 'oh fail'
         )
 
-        m_resp.return_value = '{"data": None, ' \
-                              '"error_code": "999", ' \
-                              '"error_message": "oh fail", "status": false}'
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.cc_delete", "client_id": "1"}
+            )
 
+        self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            self.client.client_cc_delete(form_data={'client_id': '1'}),
-            '{"data": None, "error_code": "999", '
-            '"error_message": "oh fail", "status": false}'
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 999,
+                "error_message": "oh fail",
+                "status": False
+            }
         )
-
-        m_resp.assert_called_once_with(error_code=999, message='oh fail')
