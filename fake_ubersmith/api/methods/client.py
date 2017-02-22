@@ -54,6 +54,7 @@ class Client(Base):
 
         client_data = form_data.copy()
         client_data["clientid"] = client_id
+        client_data["contact_id"] = 0
         self.data_store.clients.append(client_data)
 
         return response(data=client_id)
