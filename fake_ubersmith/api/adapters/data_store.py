@@ -18,6 +18,7 @@ class DataStore(object):
         self.credit_cards = []
         self.countries = {}
         self.clients = []
+        self.contacts = []
         self.coupons = []
         self.order = {}
         self.order_submit = {}

@@ -51,9 +51,10 @@ class Client(Base):
         )
 
     def client_add(self, form_data):
-        client_id = len(self.data_store.clients)
+        client_id = len(self.data_store.clients) + 1
 
         form_data["clientid"] = client_id
+        form_data["contact_id"] = 0
         self.data_store.clients.append(form_data)
 
         return response(data=str(client_id))
@@ -74,6 +75,14 @@ class Client(Base):
                 error_code=1,
                 message="Client ID '{}' not found.".format(client_id)
             )
+
+    def contact_add(self, form_data):
+        contact_id = len(self.data_store.contacts) + 1
+        form_data["contact_id"] = contact_id
+
+        self.data_store.contacts.append(form_data)
+
+        return response(data=str(contact_id))
 
     @record(method='client.cc_add')
     def client_cc_add(self, form_data):

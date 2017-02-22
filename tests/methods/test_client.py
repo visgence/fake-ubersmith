@@ -27,7 +27,7 @@ class TestClientModule(unittest.TestCase):
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_add_creates_a_client(self, m_resp):
-        m_resp.return_value = '{"data": "0", ' \
+        m_resp.return_value = '{"data": "1", ' \
                               '"error_code": null, ' \
                               '"error_message": "", ' \
                               '"status": true}'
@@ -45,7 +45,7 @@ class TestClientModule(unittest.TestCase):
             m_resp.return_value
         )
 
-        m_resp.assert_called_once_with(data="0")
+        m_resp.assert_called_once_with(data="1")
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_get_returns_successfully(self, m_resp):
@@ -81,6 +81,28 @@ class TestClientModule(unittest.TestCase):
         m_resp.assert_called_once_with(
            error_code=1, message="Client ID '1' not found."
         )
+
+    @patch('fake_ubersmith.api.methods.client.response')
+    def test_client_contact_add_creates_a_contact(self, m_resp):
+        m_resp.return_value = '{"data": "1", ' \
+                              '"error_code": null, ' \
+                              '"error_message": "", ' \
+                              '"status": true}'
+
+        self.assertEqual(
+            self.client.contact_add(
+                form_data={
+                    'client_id': 1,
+                    'real_name': 'John Doe',
+                    'email': 'john.doe@invalid.com',
+                    'login': 'john',
+                    'password': 'doe',
+                }
+            ),
+            m_resp.return_value
+        )
+
+        m_resp.assert_called_once_with(data="1")
 
     @patch('fake_ubersmith.api.methods.client.response')
     def test_client_cc_add_is_successful(self, m_resp):

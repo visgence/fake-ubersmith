@@ -38,11 +38,8 @@ class Uber(Base):
         )
 
     def check_login(self, form_data):
-        for client in self.data_store.clients:
-            if client['uber_login'] == form_data['login'] and client['uber_pass'] == form_data['pass']:
-                return response(data={"client_id": client['clientid']})
-
-        return response(error_code=3, message="Invalid login or password.")
+        data = self._get_client(form_data['login'], form_data['pass'])
+        return response(data=data) if data else response(error_code=3, message="Invalid login or password.")
 
     @record(method='plan.get')
     def service_plan_get(self, form_data):
@@ -80,3 +77,19 @@ class Uber(Base):
                 }
             )
         return response(data=self.data_store.service_plans_list)
+
+    def _get_client(self, username, password):
+        def _build_payload(client_id, contact_id):
+            return {"client_id": client_id, "contact_id": contact_id}
+
+        def _get_contact():
+            return next(
+                (_build_payload(c['client_id'], c["contact_id"]) for c in self.data_store.contacts if
+                 c['login'] == username and c['password'] == password), None
+            )
+
+        return next(
+            (_build_payload(c['clientid'], c["contact_id"]) for c in self.data_store.clients if
+             c['uber_login'] == username and c['uber_pass'] == password),
+            _get_contact()
+        )

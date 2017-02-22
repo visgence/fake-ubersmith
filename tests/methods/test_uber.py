@@ -121,10 +121,11 @@ class TestUberModule(unittest.TestCase):
         )
 
     @patch('fake_ubersmith.api.methods.uber.response')
-    def test_check_login_succesfully(self, m_resp):
+    def test_check_login_succesfully_for_client(self, m_resp):
         self.data_store.clients = [
             {
-                'clientid': '0',
+                'clientid': '1',
+                'contact_id': '0',
                 'first': 'John',
                 'last': 'Smith',
                 'email': 'john.smith@invalid.com',
@@ -133,7 +134,7 @@ class TestUberModule(unittest.TestCase):
             }
         ]
 
-        m_resp.return_value = '{"data": {"client_id": "0"}, ' \
+        m_resp.return_value = '{"data": {"client_id": "1", "contact_id": "0"}, ' \
                               '"error_code": null, ' \
                               '"error_message": "", ' \
                               '"status": true' \
@@ -143,19 +144,19 @@ class TestUberModule(unittest.TestCase):
             self.uber.check_login(
                 form_data={"login": "john", "pass": "smith"}
             ),
-            '{"data": {"client_id": "0"}, '
+            '{"data": {"client_id": "1", "contact_id": "0"}, '
             '"error_code": null, "error_message": "", "status": true}'
         )
 
         m_resp.assert_called_once_with(
-            data={"client_id": "0"}
+            data={"client_id": "1", "contact_id": "0"}
         )
 
     @patch('fake_ubersmith.api.methods.uber.response')
     def test_check_login_failed(self, m_resp):
         self.data_store.clients = [
             {
-                'clientid': '0',
+                'clientid': '1',
                 'first': 'John',
                 'last': 'Smith',
                 'email': 'john.smith@invalid.com',
@@ -182,3 +183,34 @@ class TestUberModule(unittest.TestCase):
         )
 
         m_resp.assert_called_once_with(error_code=3, message="Invalid login or password.")
+
+    @patch('fake_ubersmith.api.methods.uber.response')
+    def test_check_login_sucessfully_for_contact(self, m_resp):
+        self.data_store.contacts = [
+            {
+                'client_id': '1234',
+                'contact_id': '1',
+                'real_name': 'Line Doe',
+                'email': 'line.doe@invalid.com',
+                'login': 'line',
+                'password': 'doe',
+            }
+        ]
+
+        m_resp.return_value = '{"data": {"client_id": "1234", "contact_id": "1"}, ' \
+                              '"error_code": null, ' \
+                              '"error_message": "", ' \
+                              '"status": true' \
+                              '}'
+
+        self.assertEqual(
+            self.uber.check_login(
+                form_data={"login": "line", "pass": "doe"}
+            ),
+            '{"data": {"client_id": "1234", "contact_id": "1"}, '
+            '"error_code": null, "error_message": "", "status": true}'
+        )
+
+        m_resp.assert_called_once_with(
+            data={"client_id": "1234", "contact_id": "1"}
+        )
