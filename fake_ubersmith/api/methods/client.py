@@ -50,13 +50,13 @@ class Client(Base):
         )
 
     def client_add(self, form_data):
-        client_id = len(self.data_store.clients) + 1
+        client_id = str(len(self.data_store.clients) + 1)
 
         client_data = form_data.copy()
         client_data["clientid"] = client_id
         self.data_store.clients.append(client_data)
 
-        return response(data=str(client_id))
+        return response(data=client_id)
 
     def client_get(self, form_data):
         client_id = form_data["client_id"]
@@ -76,13 +76,13 @@ class Client(Base):
             )
 
     def contact_add(self, form_data):
-        contact_id = len(self.data_store.contacts) + 1
+        contact_id = str(len(self.data_store.contacts) + 1)
 
         contact_data = form_data.copy()
         contact_data["contact_id"] = contact_id
         self.data_store.contacts.append(contact_data)
 
-        return response(data=str(contact_id))
+        return response(data=contact_id)
 
     def client_cc_add(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
