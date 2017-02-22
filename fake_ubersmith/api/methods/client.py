@@ -52,9 +52,9 @@ class Client(Base):
     def client_add(self, form_data):
         client_id = len(self.data_store.clients) + 1
 
-        form_data["clientid"] = client_id
-        form_data["contact_id"] = 0
-        self.data_store.clients.append(form_data)
+        client_data = form_data.copy()
+        client_data["clientid"] = client_id
+        self.data_store.clients.append(client_data)
 
         return response(data=str(client_id))
 
@@ -77,9 +77,10 @@ class Client(Base):
 
     def contact_add(self, form_data):
         contact_id = len(self.data_store.contacts) + 1
-        form_data["contact_id"] = contact_id
 
-        self.data_store.contacts.append(form_data)
+        contact_data = form_data.copy()
+        contact_data["contact_id"] = contact_id
+        self.data_store.contacts.append(contact_data)
 
         return response(data=str(contact_id))
 
