@@ -13,7 +13,6 @@
 # limitations under the License.
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
-from fake_ubersmith.api.utils.helpers import record
 from fake_ubersmith.api.utils.response import response
 
 
@@ -41,7 +40,6 @@ class Uber(Base):
         data = self._get_client(form_data['login'], form_data['pass'])
         return response(data=data) if data else response(error_code=3, message="Invalid login or password.")
 
-    @record(method='plan.get')
     def service_plan_get(self, form_data):
         if isinstance(self.service_plan_error, FakeUbersmithError):
             return response(
@@ -65,7 +63,6 @@ class Uber(Base):
                 message="No Service Plan found"
             )
 
-    @record(method='plan.list')
     def service_plan_list(self, form_data):
         if 'code' in form_data:
             plan_code = form_data['code']

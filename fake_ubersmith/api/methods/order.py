@@ -13,7 +13,6 @@
 # limitations under the License.
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
-from fake_ubersmith.api.utils.helpers import record
 from fake_ubersmith.api.utils.response import response
 
 
@@ -58,8 +57,6 @@ class Order(Base):
                 error_code=1, message="could not get coupon info for"
             )
 
-    # TODO - (wajdi) Determine if order_queue_id is correct attribute per doc
-    @record(method='order.create')
     def create_order(self, form_data):
         order = self.data_store.order.get(form_data['order_id'])
         if isinstance(order, FakeUbersmithError):
@@ -68,11 +65,9 @@ class Order(Base):
             )
         return response(data=order)
 
-    @record(method='order.respond')
     def order_respond(self, form_data):
         return response(data=8)
 
-    @record(method='order.submit')
     def submit_order(self, form_data):
         order_submit = self.data_store.order_submit.get(form_data['order_id'])
         if isinstance(order_submit, FakeUbersmithError):
@@ -81,7 +76,6 @@ class Order(Base):
             )
         return response(data=order_submit)
 
-    @record(method='order.cancel')
     def cancel_order(self, form_data):
         order_cancel = self.data_store.order_cancel.get(form_data['order_id'])
         if isinstance(order_cancel, FakeUbersmithError):

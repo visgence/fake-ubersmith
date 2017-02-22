@@ -13,7 +13,6 @@
 # limitations under the License.
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
-from fake_ubersmith.api.utils.helpers import record
 from fake_ubersmith.api.utils.response import response
 
 
@@ -84,7 +83,6 @@ class Client(Base):
 
         return response(data=str(contact_id))
 
-    @record(method='client.cc_add')
     def client_cc_add(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
             return response(
@@ -93,7 +91,6 @@ class Client(Base):
             )
         return response(data=self.credit_card_response)
 
-    @record(method='client.cc_update')
     def client_cc_update(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
             return response(
@@ -124,7 +121,6 @@ class Client(Base):
                 message="request failed: client_id parameter not supplied"
             )
 
-    @record(method='client.cc_delete')
     def client_cc_delete(self, form_data):
         if isinstance(self.credit_card_delete_response, FakeUbersmithError):
             return response(

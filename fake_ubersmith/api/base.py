@@ -20,7 +20,6 @@ class Base(metaclass=ABCMeta):
         self.data_store = data_store
         self.app = None
         self.methods = {}
-        self.records = {}
 
     @abstractmethod
     def hook_to(self, entity):
