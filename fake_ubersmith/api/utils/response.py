@@ -17,7 +17,7 @@ import json
 from flask import make_response
 
 
-def response(data=None, error_code=None, message=""):
+def response(data="", error_code=None, message=""):
     r = json.dumps({
         "status": False if error_code else True,
         "error_code": error_code,

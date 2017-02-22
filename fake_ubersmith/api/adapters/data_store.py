@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class DataStore(object):
+class DataStore:
     def __init__(self):
         self.credit_cards = []
         self.countries = {}
