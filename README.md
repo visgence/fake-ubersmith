@@ -14,7 +14,7 @@ fake-ubersmith
 # Docker usage
 ```
 docker pull internap/fake-ubersmith:latest
-docker run -d -p 8000:9131 fake-ubersmith
+docker run -d -p 8000:9131 internap/fake-ubersmith
 ```
 
 # License
