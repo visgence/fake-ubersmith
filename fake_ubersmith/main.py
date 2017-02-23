@@ -21,24 +21,24 @@ from fake_ubersmith.api.methods.order import Order
 from fake_ubersmith.api.methods.uber import Uber
 from fake_ubersmith.api.ubersmith import UbersmithBase
 
-# TODO (wajdi) Make configurable passed parameter
-port = 9131
-
-app = Flask('fake_ubersmith')
-
-data_store = DataStore()
-base_uber_api = UbersmithBase(data_store)
-
-AdministrativeLocal().hook_to(app)
-
-Uber(data_store).hook_to(base_uber_api)
-Order(data_store).hook_to(base_uber_api)
-Client(data_store).hook_to(base_uber_api)
-
-base_uber_api.hook_to(app)
-
 
 def run():
+    # TODO (wajdi) Make configurable passed parameter
+    port = 9131
+
+    app = Flask('fake_ubersmith')
+
+    data_store = DataStore()
+    base_uber_api = UbersmithBase(data_store)
+
+    AdministrativeLocal().hook_to(app)
+
+    Uber(data_store).hook_to(base_uber_api)
+    Order(data_store).hook_to(base_uber_api)
+    Client(data_store).hook_to(base_uber_api)
+
+    base_uber_api.hook_to(app)
+
     app.run(host="0.0.0.0", port=port)
 
 if __name__ == '__main__':
