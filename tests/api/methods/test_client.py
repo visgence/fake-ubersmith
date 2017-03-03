@@ -123,6 +123,124 @@ class TestClientModule(unittest.TestCase):
             }
         )
 
+    def test_client_contact_get_returns_error_when_empty_payload_provided(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_get",
+                }
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 1,
+                "error_message": "No contact ID specified",
+                "status": False
+            }
+        )
+
+    def test_client_contact_get_with_bad_contact_id_returns_error(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_get",
+                    "contact_id": "bad"
+                }
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 1,
+                "error_message": "Invalid contact_id specified.",
+                "status": False
+            }
+        )
+
+    def test_client_contact_get_with_bad_user_login_returns_error(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_get",
+                    "user_login": "bad"
+                }
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 1,
+                "error_message": "Invalid user_login specified.",
+                "status": False
+            }
+        )
+
+    def test_client_contact_get_with_contact_id_returns_a_contact(self):
+        a_contact = {"contact_id": "100"}
+
+        self.data_store.contacts.append(a_contact)
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_get",
+                    "contact_id": "100",
+                }
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": a_contact,
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
+        )
+
+    def test_client_contact_get_with_user_login_returns_a_contact(self):
+        a_contact = {
+            "contact_id": "100",
+            "first": "John",
+            "last": "Smith",
+            "email": "john.smith@invalid.com",
+            "uber_login": "john",
+        }
+
+        self.data_store.contacts.append(a_contact)
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_get",
+                    "user_login": "john",
+                }
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": a_contact,
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
+        )
+
     def test_client_cc_add_is_successful(self):
 
         with self.app.test_client() as c:
