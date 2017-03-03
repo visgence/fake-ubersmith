@@ -57,6 +57,7 @@ class TestClientModule(unittest.TestCase):
                 "status": True
             }
         )
+        self.assertEqual(self.data_store.clients[0]["login"], "john")
 
     def test_client_get_returns_successfully(self):
         self.data_store.clients = [{"clientid": "1"}]
