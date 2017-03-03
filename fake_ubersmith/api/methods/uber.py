@@ -38,7 +38,12 @@ class Uber(Base):
 
     def check_login(self, form_data):
         data = self._get_client(form_data['login'], form_data['pass'])
-        return response(data=data) if data else response(
+
+        if data:
+            data['type'] = 'client'
+            return response(data=data)
+
+        return response(
             error_code=3, message="Invalid login or password."
         )
 

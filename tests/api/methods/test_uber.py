@@ -170,7 +170,7 @@ class TestUberModule(unittest.TestCase):
             json.loads(resp.data.decode('utf-8')),
             {
                 "data": {
-                    "client_id": "1", "contact_id": "0"
+                    "client_id": "1", "contact_id": "0", "type": "client"
                 },
                 "error_code": None,
                 "error_message": "", "status": True
@@ -236,7 +236,7 @@ class TestUberModule(unittest.TestCase):
         self.assertEqual(
             json.loads(resp.data.decode('utf-8')),
             {
-                "data": {"client_id": "1234", "contact_id": "1"},
+                "data": {"client_id": "1234", "contact_id": "1", "type": "client"},
                 "error_code": None,
                 "error_message": "",
                 "status": True
