@@ -63,6 +63,11 @@ class Client(Base):
         client_data = form_data.copy()
         client_data["clientid"] = client_id
         client_data["contact_id"] = str(0)
+
+        if client_data.get("uber_login"):
+            client_data["login"] = client_data.get("uber_login")
+            del client_data["uber_login"]
+
         self.data_store.clients.append(client_data)
 
         return response(data=client_id)
