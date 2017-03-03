@@ -93,7 +93,7 @@ class Uber(Base):
             )
 
         return next(
-            (_build_payload(c['clientid'], c["contact_id"], c["uber_login"]) for c in self.data_store.clients if
-             c['uber_login'] == username and c['uber_pass'] == password),
+            (_build_payload(c['clientid'], c["contact_id"], c["login"]) for c in self.data_store.clients if
+             c['login'] == username and c['uber_pass'] == password),
             _get_contact()
         )

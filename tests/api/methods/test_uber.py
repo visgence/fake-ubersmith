@@ -150,7 +150,7 @@ class TestUberModule(unittest.TestCase):
                 'first': 'John',
                 'last': 'Smith',
                 'email': 'john.smith@invalid.com',
-                'uber_login': 'john',
+                'login': 'john',
                 'uber_pass': 'smith',
             }
         ]
@@ -184,7 +184,7 @@ class TestUberModule(unittest.TestCase):
                 'first': 'John',
                 'last': 'Smith',
                 'email': 'john.smith@invalid.com',
-                'uber_login': 'john',
+                'login': 'john',
                 'uber_pass': 'smith',
             }
         ]
