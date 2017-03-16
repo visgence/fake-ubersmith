@@ -84,7 +84,7 @@ class Uber(Base):
 
     def _get_client(self, username, password):
         def _build_payload(client_id, contact_id, login):
-            return {"client_id": client_id, "contact_id": int(contact_id), "login": login}
+            return {"client_id": client_id, "contact_id": contact_id, "login": login}
 
         def _get_contact():
             return next(
@@ -93,7 +93,7 @@ class Uber(Base):
             )
 
         return next(
-            (_build_payload(c['clientid'], c["contact_id"], c["login"]) for c in self.data_store.clients if
+            (_build_payload(c['clientid'], int(c["contact_id"]), c["login"]) for c in self.data_store.clients if
              c['login'] == username and c['uber_pass'] == password),
             _get_contact()
         )
