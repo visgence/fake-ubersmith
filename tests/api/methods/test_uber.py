@@ -236,7 +236,7 @@ class TestUberModule(unittest.TestCase):
         self.assertEqual(
             json.loads(resp.data.decode('utf-8')),
             {
-                "data": {"client_id": "1234", "contact_id": 1, "type": "client", "login": "line"},
+                "data": {"client_id": "1234", "contact_id": "1", "type": "client", "login": "line"},
                 "error_code": None,
                 "error_message": "",
                 "status": True
