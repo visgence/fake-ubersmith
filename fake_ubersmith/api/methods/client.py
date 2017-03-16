@@ -50,7 +50,7 @@ class Client(Base):
         )
         entity.register_endpoints(
             ubersmith_method='client.contact_add',
-            function=self.client_add
+            function=self.contact_add
         )
         entity.register_endpoints(
             ubersmith_method='client.contact_get',
