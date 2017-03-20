@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+
 from flask.app import Flask
+from flask.logging import PROD_LOG_FORMAT
 
 from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.administrative_local import AdministrativeLocal
@@ -20,6 +23,15 @@ from fake_ubersmith.api.methods.client import Client
 from fake_ubersmith.api.methods.order import Order
 from fake_ubersmith.api.methods.uber import Uber
 from fake_ubersmith.api.ubersmith import UbersmithBase
+
+
+def _get_logger(logging_app):
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(
+        PROD_LOG_FORMAT, "%Y-%m-%d %H:%M:%S")
+    )
+    logging_app.logger.addHandler(handler)
+    logging_app.logger.setLevel(logging.INFO)
 
 
 def run():
@@ -38,6 +50,8 @@ def run():
     Client(data_store).hook_to(base_uber_api)
 
     base_uber_api.hook_to(app)
+
+    _get_logger(app)
 
     app.run(host="0.0.0.0", port=port)
 
