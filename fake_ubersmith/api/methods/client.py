@@ -73,7 +73,7 @@ class Client(Base):
         return response(data=client_id)
 
     def client_get(self, form_data):
-        client_id = form_data["client_id"]
+        client_id = form_data.get("client_id") or form_data.get("user_login")
         client = next(
             (
                 client for client in self.data_store.clients
