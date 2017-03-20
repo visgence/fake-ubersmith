@@ -79,6 +79,26 @@ class TestClientModule(unittest.TestCase):
             }
         )
 
+    def test_client_get_with_user_login_returns_successfully(self):
+        self.data_store.clients = [{"clientid": "1"}]
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={"method": "client.get", "user_login": "1"}
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": {"clientid": "1"},
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
+        )
+
     def test_client_get_errs_when_no_match(self):
         self.data_store.clients = [{"clientid": "100"}]
 
