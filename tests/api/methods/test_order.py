@@ -73,7 +73,7 @@ class TestOrderModule(unittest.TestCase):
             {
                 "data": "",
                 "status": False,
-                "error_message": "could not get coupon info for",
+                "error_message": "could not get coupon info",
                 "error_code": 1
             }
         )

@@ -25,10 +25,10 @@ class AdministrativeLocal(Base):
         self.app = server
         self.app.add_url_rule('/__shutdown', view_func=self.shutdown)
 
-    @staticmethod
-    def shutdown():
+    def shutdown(self):
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
         func()
+        self.logger.info("Shutting down server")
         return response(data="Shutting down server...")

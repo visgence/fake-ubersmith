@@ -1,11 +1,7 @@
-import logging
-
 from flask import request
 
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.utils.response import response
-
-logger = logging.getLogger(__name__)
 
 
 class UbersmithBase(Base):
@@ -32,12 +28,12 @@ class UbersmithBase(Base):
         )
 
     def enable_crash_mode(self, form_data):
-        logger.info("Enabling crash-mode")
+        self.logger.info("Enabling crash-mode")
         self.crash_mode = True
         return response(data="Crash Mode Enabled")
 
     def disable_crash_mode(self, form_data):
-        logger.info("Disabling crash-mode")
+        self.logger.info("Disabling crash-mode")
         self.crash_mode = False
         return response(data="Crash Mode Disabled")
 
@@ -45,22 +41,27 @@ class UbersmithBase(Base):
         self.methods[ubersmith_method] = function
 
     def _should_crash(self, method):
-        return method not in ['hidden.enable_crash_mode', 'hidden.disable_crash_mode'] and self.crash_mode
+        return method not in [
+            'hidden.enable_crash_mode',
+            'hidden.disable_crash_mode'
+        ] and self.crash_mode
 
     def _route_method(self):
         method = request.form['method']
         form = request.form
 
-        logger.info("Will call method '{}' with params '{}'".format(method, form))
+        self.logger.info(
+            "Will call method '{}' with params '{}'".format(method, form)
+        )
 
         if self._should_crash(method):
-            logger.info("Will raise because crash-mode is enable")
-            raise FakeUbersmithError("Crash mode was enabled")
+            self.logger.info("Will raise because crash-mode is enable")
+            raise FakeUbersmithError(message="Crash mode was enabled")
 
         return self.methods[method](form)
 
 
-class FakeUbersmithError:
+class FakeUbersmithError(Exception):
     def __init__(self, code=None, message=None):
         self.code = code
         self.message = message

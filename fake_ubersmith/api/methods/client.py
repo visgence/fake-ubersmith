@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
 from fake_ubersmith.api.utils.response import response
@@ -68,6 +69,8 @@ class Client(Base):
             client_data["login"] = client_data.get("uber_login")
             del client_data["uber_login"]
 
+        self.logger.info("Adding client data: {}".format(client_data))
+
         self.data_store.clients.append(client_data)
 
         return response(data=client_id)
@@ -82,8 +85,10 @@ class Client(Base):
             None
         )
         if client is not None:
+            self.logger.info("client data being returned {}".format(client))
             return response(data=client)
         else:
+            self.logger.info("Can't find client ID - {}".format(client_id))
             return response(
                 error_code=1,
                 message="Client ID '{}' not found.".format(client_id)
@@ -96,14 +101,23 @@ class Client(Base):
         contact_data["contact_id"] = contact_id
         self.data_store.contacts.append(contact_data)
 
+        self.logger.info("Contact info added: {}".format(contact_data))
+
         return response(data=contact_id)
 
     def contact_get(self, form_data):
         if "user_login" in form_data:
-            return self._get_contact_response("uber_login", 'user_login', form_data['user_login'])
+            self.logger.info("Looking up contact info by user_login")
+            return self._get_contact_response(
+                "uber_login", 'user_login', form_data['user_login']
+            )
         elif "contact_id" in form_data:
-            return self._get_contact_response("contact_id", 'contact_id', form_data['contact_id'])
+            self.logger.info("Looking up contact info by contact_id")
+            return self._get_contact_response(
+                "contact_id", 'contact_id', form_data['contact_id']
+            )
 
+        self.logger.error("No valid user_login or contact_id specified")
         return response(error_code=1, message="No contact ID specified")
 
     def client_cc_add(self, form_data):
@@ -123,18 +137,20 @@ class Client(Base):
         return response(data=True)
 
     def client_cc_info(self, form_data):
-        # This call returns no error if providing parameters, only an empty list
+        # returns no error if providing parameters, only an empty list
         if "billing_info_id" in form_data:
             return response(
                 data={
-                    cc["billing_info_id"]: cc for cc in self.data_store.credit_cards
+                    cc["billing_info_id"]: cc
+                    for cc in self.data_store.credit_cards
                     if cc["billing_info_id"] == form_data["billing_info_id"]
                 }
             )
         elif "client_id" in form_data:
             return response(
                 data={
-                    cc["billing_info_id"]: cc for cc in self.data_store.credit_cards
+                    cc["billing_info_id"]: cc
+                    for cc in self.data_store.credit_cards
                     if cc["clientid"] == form_data["client_id"]
                 }
             )
@@ -160,6 +176,8 @@ class Client(Base):
             ),
             None
         )
+
+        self.logger.info("Getting contact info: {}".format(contact))
 
         return response(data=contact) if contact else response(
             error_code=1, message="Invalid {} specified.".format(matcher_key)

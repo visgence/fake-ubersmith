@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from abc import ABCMeta, abstractmethod
+from flask import current_app
 
 
 class Base(metaclass=ABCMeta):
@@ -20,6 +21,10 @@ class Base(metaclass=ABCMeta):
         self.data_store = data_store
         self.app = None
         self.methods = {}
+
+    @property
+    def logger(self):
+        return current_app.logger
 
     @abstractmethod
     def hook_to(self, entity):
