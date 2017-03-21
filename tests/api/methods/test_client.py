@@ -60,7 +60,7 @@ class TestClientModule(unittest.TestCase):
         self.assertEqual(self.data_store.clients[0]["login"], "john")
 
     def test_client_get_returns_successfully(self):
-        self.data_store.clients = [{"clientid": "1"}]
+        self.data_store.clients = [{"clientid": "1", "contact_id": '0'}]
 
         with self.app.test_client() as c:
             resp = c.post(
@@ -80,7 +80,7 @@ class TestClientModule(unittest.TestCase):
         )
 
     def test_client_get_with_user_login_returns_successfully(self):
-        self.data_store.clients = [{"clientid": "1"}]
+        self.data_store.clients = [{"clientid": "1", "contact_id": '0'}]
 
         with self.app.test_client() as c:
             resp = c.post(
