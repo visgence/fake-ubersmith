@@ -47,18 +47,18 @@ class UbersmithBase(Base):
         ] and self.crash_mode
 
     def _route_method(self):
-        method = request.form['method']
-        form = request.form
+        data = request.form.copy()
+        method = data.pop("method")
 
         self.logger.info(
-            "Will call method '{}' with params '{}'".format(method, form)
+            "Will call method '{}' with params '{}'".format(method, data)
         )
 
         if self._should_crash(method):
             self.logger.info("Will raise because crash-mode is enable")
             raise FakeUbersmithError(message="Crash mode was enabled")
 
-        return self.methods[method](form)
+        return self.methods[method](data)
 
 
 class FakeUbersmithError(Exception):

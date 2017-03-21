@@ -60,7 +60,14 @@ class TestClientModule(unittest.TestCase):
         self.assertEqual(self.data_store.clients[0]["login"], "john")
 
     def test_client_get_returns_successfully(self):
-        self.data_store.clients = [{"clientid": "1", "contact_id": '0'}]
+        with self.app.test_client() as c:
+            c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.add",
+                    "first": "John",
+                }
+            )
 
         with self.app.test_client() as c:
             resp = c.post(
@@ -72,7 +79,7 @@ class TestClientModule(unittest.TestCase):
         self.assertEqual(
             json.loads(resp.data.decode('utf-8')),
             {
-                "data": {"clientid": "1"},
+                "data": {"clientid": "1", "first": "John"},
                 "error_code": None,
                 "error_message": "",
                 "status": True
