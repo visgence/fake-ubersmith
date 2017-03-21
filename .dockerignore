@@ -2,3 +2,4 @@
 .git
 .eggs
 *.egg-info
+tests

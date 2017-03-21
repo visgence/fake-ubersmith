@@ -79,7 +79,7 @@ class Client(Base):
         client_id = form_data.get("client_id") or form_data.get("user_login")
         client = next(
             (
-                client for client in self.data_store.clients
+                client.copy() for client in self.data_store.clients
                 if client["clientid"] == client_id
             ),
             None
