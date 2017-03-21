@@ -85,6 +85,7 @@ class Client(Base):
             None
         )
         if client is not None:
+            client.pop("contact_id")
             self.logger.info("client data being returned {}".format(client))
             return response(data=client)
         else:
