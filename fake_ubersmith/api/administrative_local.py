@@ -23,7 +23,12 @@ class AdministrativeLocal(Base):
 
     def hook_to(self, server):
         self.app = server
+        self.app.add_url_rule('/status', view_func=self.status)
         self.app.add_url_rule('/__shutdown', view_func=self.shutdown)
+
+    @staticmethod
+    def status():
+        return response(data="Service is running")
 
     def shutdown(self):
         func = request.environ.get('werkzeug.server.shutdown')
