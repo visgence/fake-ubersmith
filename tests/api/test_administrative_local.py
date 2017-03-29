@@ -14,6 +14,16 @@ class TestAdministrativeLocal(unittest.TestCase):
         self.admin = AdministrativeLocal()
         self.admin.hook_to(self.app)
 
+    def test_status_works(self):
+        with self.app.test_client() as c:
+            resp = c.get('/status')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')).get('data'),
+            "Service is running"
+        )
+
     def test_shutdown_works(self):
         patch_path = 'fake_ubersmith.api.administrative_local.request'
         environ_path = 'werkzeug.server.shutdown'

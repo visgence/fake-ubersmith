@@ -12,21 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import ABCMeta, abstractmethod
-
-from flask import current_app
+from tests.integration_tests.base import Base
 
 
-class Base(metaclass=ABCMeta):
-    def __init__(self, data_store=None):
-        self.data_store = data_store
-        self.app = None
-        self.methods = {}
+class TestUbersmithClient(Base):
+    def test_client_creation_works(self):
+        client_id = self.ub_client.client.add(uber_login='username')
 
-    @property
-    def logger(self):
-        return current_app.logger
+        result = self.ub_client.client.get(client_id=client_id)
 
-    @abstractmethod
-    def hook_to(self, entity):
-        pass
+        self.assertEqual(result, {'clientid': client_id, 'login': 'username'})
