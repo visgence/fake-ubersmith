@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tests.integration_tests.base import Base
+from tests.integration.base import Base
 
 
 class TestUbersmithClient(Base):
