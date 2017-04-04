@@ -92,17 +92,25 @@ class Uber(Base):
         return response(data=self.data_store.service_plans_list)
 
     def _get_client(self, username, password):
-        def _build_payload(client_id, contact_id, login):
+        def _build_payload(client_id, contact_id, login, full_name=None, email=None):
             return {
                 "client_id": client_id,
                 "contact_id": contact_id,
-                "login": login
+                "login": login,
+                "fullname": full_name or "A Full Name",
+                "email": email or "stuff@invalid.invalid"
             }
 
         def _get_contact():
             return next(
                 (
-                    _build_payload(c['client_id'], c["contact_id"], c["login"])
+                    _build_payload(
+                        c['client_id'],
+                        c["contact_id"],
+                        c["login"],
+                        c.get("real_name"),
+                        c.get("email")
+                    )
                     for c in self.data_store.contacts
                     if c['login'] == username and c['password'] == password
                 ),
@@ -111,7 +119,13 @@ class Uber(Base):
 
         return next(
             (
-                _build_payload(c['clientid'], int(c["contact_id"]), c["login"])
+                _build_payload(
+                    c['clientid'],
+                    int(c["contact_id"]),
+                    c["login"],
+                    "{} {}".format(c.get("first"), c.get("last")),
+                    c.get("email")
+                )
                 for c in self.data_store.clients
                 if c['login'] == username and c['uber_pass'] == password
             ),
