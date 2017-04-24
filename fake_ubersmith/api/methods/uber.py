@@ -98,7 +98,7 @@ class Uber(Base):
                 "contact_id": contact_id,
                 "login": login,
                 "fullname": full_name or "A Full Name",
-                "email": email or "stuff@invalid.invalid"
+                "email": email
             }
 
         def _get_contact():
