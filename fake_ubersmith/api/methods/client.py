@@ -57,6 +57,10 @@ class Client(Base):
             ubersmith_method='client.contact_get',
             function=self.contact_get
         )
+        entity.register_endpoints(
+            ubersmith_method='client.contact_list',
+            function=self.contact_list
+        )
 
     def client_add(self, form_data):
         client_id = str(len(self.data_store.clients) + 1)
@@ -121,6 +125,16 @@ class Client(Base):
         self.logger.error("No valid user_login or contact_id specified")
         return response(error_code=1, message="No contact ID specified")
 
+    def contact_list(self, form_data):
+        if "client_id" in form_data:
+            self.logger.info("Retrieving contact list by client_id")
+            return self._get_all_contacts_response(
+                "client_id", 'client_id', form_data['client_id']
+            )
+
+        self.logger.error("No valid client_id specified")
+        return response(error_code=1, message="No valid client ID specified")
+
     def client_cc_add(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
             return response(
@@ -168,6 +182,17 @@ class Client(Base):
                 message=self.credit_card_delete_response.message
             )
         return response(data=True)
+
+    def _get_all_contacts_response(self, lookup_key, matcher_key, matcher_value):
+        contacts = {
+            contact['contact_id']: contact
+            for contact in self.data_store.contacts
+            if contact[lookup_key] == matcher_value
+        }
+
+        return response(data=contacts) if contacts else response(
+            error_code=1, message="Invalid {} specified.".format(matcher_key)
+        )
 
     def _get_contact_response(self, lookup_key, matcher_key, matcher_value):
         contact = next(

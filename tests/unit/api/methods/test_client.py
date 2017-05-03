@@ -238,6 +238,69 @@ class TestClientModule(unittest.TestCase):
             }
         )
 
+    def test_client_contact_list_returns_contacts_for_given_client_id(self):
+        contact_1 = {
+            "contact_id": '1',
+            "client_id": '100',
+            "real_name": "John Patate",
+            "email": "john.patate@fake.invalid"
+        }
+        contact_2 = {
+            "contact_id": '1',
+            "client_id": '101',
+            "real_name": "The Dude",
+            "email": "the.dude@fake.invalid"
+        }
+        contact_3 = {
+            "contact_id": '2',
+            "client_id": '100',
+            "real_name": "Joe Poutine",
+            "email": "joe.poutine@fake.invalid"
+        }
+
+        self.data_store.contacts.extend([contact_1, contact_2, contact_3])
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_list",
+                    "client_id": "100",
+                }
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": {'1': contact_1, '2': contact_3},
+                "error_code": None,
+                "error_message": "",
+                "status": True
+            }
+        )
+
+    def test_client_contact_list_with_bad_client_id_returns_error(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "client.contact_list",
+                    "client_id": "does_not_exist"
+                }
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "data": "",
+                "error_code": 1,
+                "error_message": "Invalid client_id specified.",
+                "status": False
+            }
+        )
+
     def test_client_contact_get_with_user_login_returns_a_contact(self):
         a_contact = {
             "contact_id": "100",
