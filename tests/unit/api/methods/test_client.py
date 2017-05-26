@@ -59,7 +59,7 @@ class TestClientModule(unittest.TestCase):
             }
         )
         self.assertEqual(self.data_store.clients[0]["login"], "john")
-        self.assertEqual(self.data_store.contacts[0]["contact_id"], "1")
+        self.assertIsInstance(self.data_store.contacts[0]["contact_id"], str)
         self.assertEqual(self.data_store.contacts[0]["client_id"], body.get("data"))
         self.assertEqual(self.data_store.contacts[0]["description"], "Primary Contact")
 
@@ -144,16 +144,12 @@ class TestClientModule(unittest.TestCase):
                 }
             )
 
+        body = json.loads(resp.data.decode('utf-8'))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(
-            json.loads(resp.data.decode('utf-8')),
-            {
-                "data": "1",
-                "error_code": None,
-                "error_message": "",
-                "status": True
-            }
-        )
+        self.assertIsNone(body.get("error_code"))
+        self.assertTrue(body.get("status"))
+        self.assertEqual(body.get("error_message"), "")
+        self.assertIsInstance(body.get("data"), str)
 
     def test_client_contact_get_returns_error_when_empty_payload_provided(self):
         with self.app.test_client() as c:
