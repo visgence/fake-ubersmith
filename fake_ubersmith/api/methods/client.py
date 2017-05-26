@@ -76,11 +76,12 @@ class Client(Base):
         self.logger.info("Adding client data: {}".format(client_data))
 
         self.data_store.clients.append(client_data)
-        self.data_store.contacts.append(
+        self.contact_add(
             dict(
-                contact_id=str(len(self.data_store.contacts) + 1),
                 client_id=client_id,
-                description="Primary Contact"
+                description="Primary Contact",
+                login="so_much_invalid_username",
+                password="so_much_invalid_password"
             )
         )
 
