@@ -48,8 +48,9 @@ class TestClientModule(unittest.TestCase):
             )
 
         self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.data.decode('utf-8'))
         self.assertEqual(
-            json.loads(resp.data.decode('utf-8')),
+            body,
             {
                 "data": "1",
                 "error_code": None,
@@ -58,6 +59,9 @@ class TestClientModule(unittest.TestCase):
             }
         )
         self.assertEqual(self.data_store.clients[0]["login"], "john")
+        self.assertEqual(self.data_store.contacts[0]["contact_id"], "1")
+        self.assertEqual(self.data_store.contacts[0]["client_id"], body.get("data"))
+        self.assertEqual(self.data_store.contacts[0]["description"], "Primary Contact")
 
     def test_client_get_returns_successfully(self):
         with self.app.test_client() as c:
