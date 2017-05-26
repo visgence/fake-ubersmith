@@ -15,6 +15,7 @@
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
 from fake_ubersmith.api.utils.response import response
+from fake_ubersmith.api.utils.utils import a_random_id
 
 
 class Client(Base):
@@ -67,7 +68,7 @@ class Client(Base):
 
         client_data = form_data.copy()
         client_data["clientid"] = client_id
-        client_data["contact_id"] = str(0)
+        client_data["contact_id"] = str(a_random_id())
 
         if client_data.get("uber_login"):
             client_data["login"] = client_data.get("uber_login")
@@ -108,7 +109,7 @@ class Client(Base):
             )
 
     def contact_add(self, form_data):
-        contact_id = str(len(self.data_store.contacts) + 1)
+        contact_id = str(a_random_id())
 
         contact_data = form_data.copy()
         contact_data["contact_id"] = contact_id
