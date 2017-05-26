@@ -64,11 +64,11 @@ class Client(Base):
         )
 
     def client_add(self, form_data):
-        client_id = str(len(self.data_store.clients) + 1)
+        client_id = str(a_random_id())
 
         client_data = form_data.copy()
         client_data["clientid"] = client_id
-        client_data["contact_id"] = str(a_random_id())
+        client_data["contact_id"] = str(0)
 
         if client_data.get("uber_login"):
             client_data["login"] = client_data.get("uber_login")
