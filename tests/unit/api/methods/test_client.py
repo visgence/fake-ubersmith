@@ -49,15 +49,11 @@ class TestClientModule(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 200)
         body = json.loads(resp.data.decode('utf-8'))
-        self.assertEqual(
-            body,
-            {
-                "data": "1",
-                "error_code": None,
-                "error_message": "",
-                "status": True
-            }
-        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsNone(body.get("error_code"))
+        self.assertTrue(body.get("status"))
+        self.assertEqual(body.get("error_message"), "")
+        self.assertIsInstance(body.get("data"), str)
         self.assertEqual(self.data_store.clients[0]["login"], "john")
         self.assertIsInstance(self.data_store.contacts[0]["contact_id"], str)
         self.assertEqual(self.data_store.contacts[0]["client_id"], body.get("data"))
@@ -65,25 +61,26 @@ class TestClientModule(unittest.TestCase):
 
     def test_client_get_returns_successfully(self):
         with self.app.test_client() as c:
-            c.post(
+            resp = c.post(
                 'api/2.0/',
                 data={
                     "method": "client.add",
                     "first": "John",
                 }
             )
+            client_id = json.loads(resp.data.decode('utf-8')).get("data")
 
         with self.app.test_client() as c:
             resp = c.post(
                 'api/2.0/',
-                data={"method": "client.get", "client_id": "1"}
+                data={"method": "client.get", "client_id": client_id}
             )
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             json.loads(resp.data.decode('utf-8')),
             {
-                "data": {"clientid": "1", "first": "John"},
+                "data": {"clientid": client_id, "first": "John"},
                 "error_code": None,
                 "error_message": "",
                 "status": True
