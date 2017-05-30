@@ -11,18 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from fake_ubersmith.api.base import Base
+from fake_ubersmith.api.utils.response import response
 
 
-class DataStore:
-    def __init__(self):
-        self.credit_cards = []
-        self.countries = {}
-        self.clients = []
-        self.contacts = []
-        self.coupons = []
-        self.order = {}
-        self.order_submit = {}
-        self.order_cancel = {}
-        self.service_plans = []
-        self.service_plans_list = None
-        self.event_log = []
+class Iweb(Base):
+    def __init__(self, data_store):
+        super().__init__(data_store)
+
+    def hook_to(self, entity):
+        entity.register_endpoints(
+            ubersmith_method='iweb.log_event',
+            function=self.log_event
+        )
+
+    def log_event(self, form_data):
+        self.data_store.event_log.append(form_data.to_dict())
+        return response(data="1")
