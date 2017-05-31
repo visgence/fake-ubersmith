@@ -17,7 +17,7 @@ import unittest
 from flask import Flask
 
 from fake_ubersmith.api.adapters.data_store import DataStore
-from fake_ubersmith.api.methods.vendor_modules.iweb import Iweb
+from fake_ubersmith.api.methods.vendor_modules.iweb import IWeb
 from fake_ubersmith.api.ubersmith import UbersmithBase
 
 
@@ -25,7 +25,7 @@ class TestIwebModule(unittest.TestCase):
 
     def setUp(self):
         self.data_store = DataStore()
-        self.iweb = Iweb(self.data_store)
+        self.iweb = IWeb(self.data_store)
 
         self.app = Flask(__name__)
         self.base_iweb_api = UbersmithBase(self.data_store)

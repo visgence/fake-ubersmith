@@ -22,6 +22,7 @@ from fake_ubersmith.api.administrative_local import AdministrativeLocal
 from fake_ubersmith.api.methods.client import Client
 from fake_ubersmith.api.methods.order import Order
 from fake_ubersmith.api.methods.uber import Uber
+from fake_ubersmith.api.methods.vendor_modules.iweb import IWeb
 from fake_ubersmith.api.ubersmith import UbersmithBase
 
 
@@ -48,6 +49,7 @@ def run():
     Uber(data_store).hook_to(base_uber_api)
     Order(data_store).hook_to(base_uber_api)
     Client(data_store).hook_to(base_uber_api)
+    IWeb(data_store).hook_to(base_uber_api)
 
     base_uber_api.hook_to(app)
 
