@@ -15,7 +15,7 @@ from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.utils.response import response
 
 
-class Iweb(Base):
+class IWeb(Base):
     def __init__(self, data_store):
         super().__init__(data_store)
 
