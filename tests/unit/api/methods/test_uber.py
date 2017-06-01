@@ -254,3 +254,170 @@ class TestUberModule(unittest.TestCase):
                 "status": True
             }
         )
+
+    def test_get_admin_roles_when_passing_valid_user_id_and_role_id(self):
+        role_id = "some_role_id"
+        self.data_store.roles = {
+            role_id: {
+                'role_id': role_id,
+                'name': 'A Admin Role',
+                'descr': 'A Admin Role'
+            }
+        }
+        self.data_store.user_mapping = {
+            "some_user_id": {"roles": {role_id}}
+        }
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "uber.acl_admin_role_get",
+                    "role_id": role_id,
+                    "userid": "some_user_id",
+                }
+            )
+
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "status": True,
+                "error_code": None,
+                "error_message": "",
+                "data": {
+                    role_id: {
+                        "role_id": role_id,
+                        'name': 'A Admin Role',
+                        'descr': 'A Admin Role'
+                    }
+                }
+            }
+        )
+
+    def test_get_admin_roles_when_passing_bad_role_id(self):
+        role_id = "some_role_id"
+        self.data_store.roles = {
+            role_id: {
+                'name': 'Some event type',
+                'descr': 'client',
+                'acls': {
+                    'admin.portal': {'read': '1'}
+                }
+            }
+        }
+        self.data_store.user_mapping = {
+            "some_user_id": {"role_id": "some_role_id"}
+        }
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "uber.acl_admin_role_get",
+                    "role_id": "bogus_id_that_won't_match"
+                }
+            )
+
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "error_code": 1,
+                "error_message": "No User Roles found",
+                "status": False,
+                "data": ""
+            }
+        )
+
+    def test_get_admin_roles_successfully_when_passing_valid_role_id(self):
+        role_id = "some_role_id"
+        self.data_store.roles = {
+            role_id: {
+                'name': 'A Admin Role',
+                'descr': 'A Admin Role',
+                'acls': {
+                    'admin.portal': {'read': '1'}
+                }
+            }
+        }
+
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "uber.acl_admin_role_get",
+                    "role_id": role_id
+                }
+            )
+
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')).get('data'),
+            {
+                'name': 'A Admin Role',
+                'descr': 'A Admin Role',
+                'acls': {
+                    'admin.portal': {'read': '1'}
+                }
+            }
+        )
+
+    def test_get_admin_roles_fails_when_no_role_id_passed(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "uber.acl_admin_role_get",
+                    "userid": "some_user_id"
+                }
+            )
+
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "error_code": 1,
+                "error_message": "role_id parameter not specified",
+                "status": False,
+                "data": ""
+            }
+        )
+
+    def test_get_admin_roles_fails_when_no_role_could_be_found_for_user(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "uber.acl_admin_role_get",
+                    "userid": "some_user_id",
+                    "role_id": "some_role_id"
+                }
+            )
+
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "error_code": 1,
+                "error_message": "No User Roles found",
+                "status": False,
+                "data": ""
+            }
+        )
+
+    def test_get_admin_roles_fails_when_user_not_found(self):
+        with self.app.test_client() as c:
+            resp = c.post(
+                'api/2.0/',
+                data={
+                    "method": "uber.acl_admin_role_get",
+                    "userid": "some_user_id",
+                    "role_id": "some_role_id"
+                }
+            )
+
+        self.assertEqual(
+            json.loads(resp.data.decode('utf-8')),
+            {
+                "error_code": 1,
+                "error_message": "No User Roles found",
+                "status": False,
+                "data": ""
+            }
+        )

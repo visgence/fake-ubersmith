@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from ubersmith_client.exceptions import UbersmithException
+
 from tests.integration.base import Base
+from tests.utils import a_random_string
 
 
 class TestVendorModulesIWeb(Base):
@@ -26,3 +29,93 @@ class TestVendorModulesIWeb(Base):
         )
 
         self.assertEqual(result, "1")
+
+    def test_add_admin_role_successfully(self):
+        name = a_random_string()
+        descr = a_random_string()
+
+        role_id = self.ub_client.iweb.acl_admin_role_add(
+            **{
+                'name': name,
+                'descr': descr,
+                'acls[admin.portal][read]': 1
+            }
+        )
+
+        role_result = self.ub_client.uber.acl_admin_role_get(role_id=role_id)
+
+        self.assertEqual(
+            role_result,
+            {
+                'role_id': role_id,
+                'name': name,
+                'descr': descr,
+                'acls': {
+                    'admin.portal': {'read': '1'}
+                }
+            }
+        )
+
+    def test_assign_role_to_user_successfully(self):
+        name = a_random_string()
+        descr = a_random_string()
+
+        role_id = self.ub_client.iweb.acl_admin_role_add(
+            **{
+                'name': name,
+                'descr': descr,
+                'acls[admin.portal][read]': 1
+            }
+        )
+
+        self.ub_client.iweb.user_role_assign(
+            user_id='some_user_id', role_id=role_id
+        )
+
+        role_result = self.ub_client.uber.acl_admin_role_get(
+            userid='some_user_id',
+            role_id=str(role_id)
+        )
+
+        self.assertEqual(
+            role_result,
+            {
+                str(role_id): {
+                    'role_id': str(role_id),
+                    'name': name,
+                    'descr': descr,
+                    'acls': {
+                        'admin.portal': {'read': '1'}
+                    }
+                }
+            }
+        )
+
+    def test_assign_same_role_to_user_fails(self):
+        user_id = 'some_user_id'
+        name = a_random_string()
+        descr = a_random_string()
+
+        role_id = self.ub_client.iweb.acl_admin_role_add(
+            **{
+                'name': name,
+                'descr': descr,
+                'acls[admin.portal][read]': 1
+            }
+        )
+
+        self.ub_client.iweb.user_role_assign(
+            user_id=user_id, role_id=role_id
+        )
+
+        with self.assertRaises(UbersmithException) as e:
+            self.ub_client.iweb.user_role_assign(
+                user_id=user_id, role_id=role_id
+            )
+
+        self.assertEqual(
+            e.exception.message,
+            "Can't assign role with id '{}' to user with id '{}'".format(
+                role_id, user_id
+            )
+        )

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from collections import defaultdict
 
 
 class DataStore:
@@ -26,3 +27,8 @@ class DataStore:
         self.service_plans = []
         self.service_plans_list = None
         self.event_log = []
+        self.roles = {}
+        self.user_mapping = defaultdict(lambda: defaultdict(set))
+
+    def flush(self):
+        self.__init__()
