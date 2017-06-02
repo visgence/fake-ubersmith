@@ -34,6 +34,10 @@ class Uber(Base):
             ubersmith_method='uber.check_login',
             function=self.check_login
         )
+        entity.register_endpoints(
+            ubersmith_method='uber.acl_admin_role_get',
+            function=self.acl_admin_role_get
+        )
 
     def check_login(self, form_data):
         data = self._get_client(form_data['login'], form_data['pass'])
@@ -91,8 +95,46 @@ class Uber(Base):
         self.logger.info("Plan not found by code. Listing all plans")
         return response(data=self.data_store.service_plans_list)
 
+    def acl_admin_role_get(self, form_data):
+        user_id = form_data.get('userid')
+        role_id = str(form_data.get('role_id', ''))
+
+        if not role_id:
+            return response(
+                error_code=1,
+                message="role_id parameter not specified"
+            )
+
+        if user_id:
+            self.logger.info(user_id)
+            self.logger.info(self.data_store.user_mapping)
+            self.logger.info(self.data_store.roles)
+            self.logger.info(self.data_store.user_mapping.get(user_id, {}))
+            role_ids = self.data_store.user_mapping.get(user_id, {}).get(
+                'roles'
+            )
+
+            self.logger.info(role_ids)
+
+            if not role_ids:
+                return response(error_code=1, message="No User Roles found")
+
+            return response(data={
+                role_id: self.data_store.roles.get(role_id)
+                for role_id in role_ids
+            })
+
+        role_data = self.data_store.roles.get(role_id)
+
+        if not role_data:
+            return response(error_code=1, message="No User Roles found")
+
+        return response(data=role_data)
+
     def _get_client(self, username, password):
-        def _build_payload(client_id, contact_id, login, full_name=None, email=None):
+        def _build_payload(
+                client_id, contact_id, login, full_name=None, email=None
+        ):
             return {
                 "client_id": client_id,
                 "contact_id": contact_id,
