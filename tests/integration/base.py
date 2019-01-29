@@ -13,13 +13,9 @@
 # limitations under the License.
 
 import logging
-import subprocess
 import unittest
 
-import requests
 import ubersmith_client
-from requests import RequestException
-from retry.api import retry_call
 
 logger = logging.getLogger()
 
@@ -33,27 +29,8 @@ class Base(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls._start_app_locally()
         cls.ub_client = ubersmith_client.api.init(
             url="{}/api/2.0/".format(cls.endpoint),
             user='username',
             password='password'
         )
-
-    @classmethod
-    def _set_new_endpoint(cls):
-        cls.endpoint = 'http://{}:{}'.format(cls.host, cls.port)
-
-    @classmethod
-    def _start_app_locally(cls):
-        subprocess.Popen(["fake-ubersmith"])
-        retry_call(
-            requests.get,
-            fargs=["{}/status".format(cls.endpoint)],
-            exceptions=RequestException,
-            delay=1
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        requests.get("{}/__shutdown".format(cls.endpoint))

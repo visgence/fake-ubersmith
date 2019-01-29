@@ -15,7 +15,6 @@
 import logging
 
 from flask.app import Flask
-from flask.logging import PROD_LOG_FORMAT
 
 from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.administrative_local import AdministrativeLocal
@@ -29,7 +28,7 @@ from fake_ubersmith.api.ubersmith import UbersmithBase
 def _get_logger(logging_app):
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(
-        PROD_LOG_FORMAT, "%Y-%m-%d %H:%M:%S")
+        '[%(asctime)s] %(levelname)s in %(module)s: %(message)s', "%Y-%m-%d %H:%M:%S")
     )
     logging_app.logger.addHandler(handler)
     logging_app.logger.setLevel(logging.INFO)
