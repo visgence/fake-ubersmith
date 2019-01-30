@@ -28,6 +28,8 @@ class DataStore:
         self.service_plans_list = None
         self.event_log = []
         self.roles = {}
+        self.acl_resources = {}
+        self.acl_resources_inc_id = 0
         self.user_mapping = defaultdict(lambda: defaultdict(set))
 
     def flush(self):
