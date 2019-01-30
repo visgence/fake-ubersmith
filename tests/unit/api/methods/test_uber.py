@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import unittest
 
 from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.uber import Uber
 from fake_ubersmith.api.ubersmith import FakeUbersmithError, UbersmithBase
 from flask import Flask
+from tests.unit.api.methods import ApiTestBase
 
 
-class TestUberModule(unittest.TestCase):
+class TestUberModule(ApiTestBase):
 
     def setUp(self):
         self.data_store = DataStore()
@@ -503,27 +503,3 @@ class TestUberModule(unittest.TestCase):
                                code=1,
                                message="Resource [baaaaaaah] not found",
                                content="")
-
-    def _assert_success(self, response, content):
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            json.loads(response.data.decode('utf-8')),
-            {
-                "error_code": None,
-                "error_message": "",
-                "status": True,
-                "data": content
-            }
-        )
-
-    def _assert_error(self, response, code, message, content):
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            json.loads(response.data.decode('utf-8')),
-            {
-                "error_code": code,
-                "error_message": message,
-                "status": False,
-                "data": content
-            }
-        )
