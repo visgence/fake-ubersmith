@@ -38,6 +38,14 @@ class Uber(Base):
             ubersmith_method='uber.acl_admin_role_get',
             function=self.acl_admin_role_get
         )
+        entity.register_endpoints(
+            ubersmith_method='uber.acl_resource_add',
+            function=self.acl_resource_add
+        )
+        entity.register_endpoints(
+            ubersmith_method='uber.acl_resource_list',
+            function=self.acl_resource_list
+        )
 
     def check_login(self, form_data):
         data = self._get_client(form_data['login'], form_data['pass'])
@@ -57,8 +65,8 @@ class Uber(Base):
         if isinstance(self.service_plan_error, FakeUbersmithError):
             self.logger.info("Error retrieving service plan")
             return response(
-               error_code=self.service_plan_error.code,
-               message=self.service_plan_error.message
+                error_code=self.service_plan_error.code,
+                message=self.service_plan_error.message
             )
 
         service_plan = next(
@@ -131,6 +139,45 @@ class Uber(Base):
 
         return response(data=role_data)
 
+    def acl_resource_add(self, form_data):
+        parent_resource_name = form_data.get('parent_resource_name', '')
+        resource_name = form_data.get('resource_name', '')
+        label = form_data.get('label', '')
+        actions = form_data.get('actions', 'create,read,update,delete')
+
+        self.logger.info("Adding role {}; {}; {}; {}".format(parent_resource_name, resource_name, label, actions))
+
+        if not parent_resource_name:
+            parent_resource_id = "0"
+            target_resource_dict = self.data_store.acl_resources
+        else:
+            parent_resource = self._find_acl_parent(self.data_store.acl_resources, parent_resource_name)
+
+            if parent_resource is None:
+                return response(error_code=1, message="Resource [{}] not found".format(parent_resource_name))
+
+            parent_resource_id = parent_resource["resource_id"]
+            target_resource_dict = parent_resource["children"]
+
+        self.data_store.acl_resources_inc_id += 1
+
+        target_resource_dict[str(self.data_store.acl_resources_inc_id)] = {
+            "resource_id": str(self.data_store.acl_resources_inc_id),
+            "name": resource_name,
+            "parent_id": parent_resource_id,
+            "lft": "0",
+            "rgt": "0",
+            "active": "1",
+            "label": label,
+            "actions": self._to_acl_actions(actions),
+            "children": {}
+        }
+
+        return response(data="")
+
+    def acl_resource_list(self, _):
+        return response(data=self.data_store.acl_resources)
+
     def _get_client(self, username, password):
         def _build_payload(
                 client_id, contact_id, login, full_name=None, email=None
@@ -173,3 +220,28 @@ class Uber(Base):
             ),
             _get_contact()
         )
+
+    def _find_acl_parent(self, resources, name):
+        for resource in resources.values():
+            if resource["name"] == name:
+                return resource
+
+            in_children = self._find_acl_parent(resource["children"], name)
+            if in_children:
+                return in_children
+
+        return None
+
+    def _to_acl_actions(self, actions_str):
+        actions = {}
+        for action in actions_str.split(","):
+            actions.update(_ACL_ACTIONS_MAPPING[action])
+        return actions
+
+
+_ACL_ACTIONS_MAPPING = {
+    "create": {"1": "Create", },
+    "read": {"2": "View", },
+    "update": {"3": "Update", },
+    "delete": {"4": "Delete", }
+}

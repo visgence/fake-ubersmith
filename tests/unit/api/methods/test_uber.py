@@ -14,11 +14,10 @@
 import json
 import unittest
 
-from flask import Flask
-
 from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.uber import Uber
 from fake_ubersmith.api.ubersmith import FakeUbersmithError, UbersmithBase
+from flask import Flask
 
 
 class TestUberModule(unittest.TestCase):
@@ -96,7 +95,6 @@ class TestUberModule(unittest.TestCase):
         )
 
     def test_service_plan_list_returns_all_plans(self):
-
         self.data_store.service_plans_list = {
             "1": {"code": "42"},
             "2": {"code": "99"}
@@ -419,5 +417,113 @@ class TestUberModule(unittest.TestCase):
                 "error_message": "No User Roles found",
                 "status": False,
                 "data": ""
+            }
+        )
+
+    def test_acl_resource_add(self):
+        self.maxDiff = None
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "uber.acl_resource_add",
+                                                          "parent_resource_name": "",
+                                                          "resource_name": "my.resource",
+                                                          "label": "my label",
+                                                          "actions": "create,read,update,delete"}),
+                                 content="")
+
+            self._assert_success(c.post('api/2.0/', data={"method": "uber.acl_resource_add",
+                                                          "parent_resource_name": "my.resource",
+                                                          "resource_name": "my.child1",
+                                                          "label": "my label 2",
+                                                          "actions": "read"}),
+                                 content="")
+
+            self._assert_success(c.post('api/2.0/', data={"method": "uber.acl_resource_add",
+                                                          "parent_resource_name": "my.child1",
+                                                          "resource_name": "my.child2",
+                                                          "label": "my label 3"}),
+                                 content="")
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "uber.acl_resource_list"}),
+                content={
+                    "1": {
+                        "resource_id": "1",
+                        "name": "my.resource",
+                        "parent_id": "0",
+                        "lft": "0",
+                        "rgt": "0",
+                        "active": "1",
+                        "label": "my label",
+                        "actions": {
+                            "1": "Create",
+                            "2": "View",
+                            "3": "Update",
+                            "4": "Delete"
+                        },
+                        "children": {
+                            "2": {
+                                "resource_id": "2",
+                                "name": "my.child1",
+                                "parent_id": "1",
+                                "lft": "0",
+                                "rgt": "0",
+                                "active": "1",
+                                "label": "my label 2",
+                                "actions": {
+                                    "2": "View",
+                                },
+                                "children": {
+                                    "3": {
+                                        "resource_id": "3",
+                                        "name": "my.child2",
+                                        "parent_id": "2",
+                                        "lft": "0",
+                                        "rgt": "0",
+                                        "active": "1",
+                                        "label": "my label 3",
+                                        "actions": {
+                                            "1": "Create",
+                                            "2": "View",
+                                            "3": "Update",
+                                            "4": "Delete"
+                                        },
+                                        "children": []
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+
+    def test_acl_resource_add_error(self):
+        with self.app.test_client() as c:
+            self._assert_error(c.post('api/2.0/', data={"method": "uber.acl_resource_add",
+                                                        "parent_resource_name": "baaaaaaah",
+                                                        "resource_name": "my.resource"}),
+                               code=1,
+                               message="Resource [baaaaaaah] not found",
+                               content="")
+
+    def _assert_success(self, response, content):
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            json.loads(response.data.decode('utf-8')),
+            {
+                "error_code": None,
+                "error_message": "",
+                "status": True,
+                "data": content
+            }
+        )
+
+    def _assert_error(self, response, code, message, content):
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            json.loads(response.data.decode('utf-8')),
+            {
+                "error_code": code,
+                "error_message": message,
+                "status": False,
+                "data": content
             }
         )

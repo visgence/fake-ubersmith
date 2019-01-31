@@ -22,6 +22,17 @@ def response(data="", error_code=None, message=""):
         "status": False if error_code else True,
         "error_code": error_code,
         "error_message": message,
-        "data": data
+        "data": _phpize_empty_dict_to_arrays(data)
     })
     return make_response((r, 200, {'Content-Type': 'application/json'}))
+
+
+def _phpize_empty_dict_to_arrays(data):
+    if isinstance(data, dict):
+        if len(data) == 0:
+            return []
+        return {k: _phpize_empty_dict_to_arrays(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [_phpize_empty_dict_to_arrays(v) for v in data]
+    else:
+        return data
