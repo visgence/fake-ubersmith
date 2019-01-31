@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import unittest
-
-from flask import Flask
+from unittest import mock
 
 from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.client import Client
 from fake_ubersmith.api.ubersmith import FakeUbersmithError, UbersmithBase
+from flask import Flask
+from tests.unit.api.methods import ApiTestBase
 
 
-class TestClientModule(unittest.TestCase):
+class TestClientModule(ApiTestBase):
     def setUp(self):
         self.data_store = DataStore()
         self.client = Client(self.data_store)
@@ -33,7 +33,6 @@ class TestClientModule(unittest.TestCase):
         self.base_uber_api.hook_to(self.app)
 
     def test_client_add_creates_a_client(self):
-
         with self.app.test_client() as c:
             resp = c.post(
                 'api/2.0/',
@@ -58,6 +57,37 @@ class TestClientModule(unittest.TestCase):
         self.assertIsInstance(self.data_store.contacts[0]["contact_id"], str)
         self.assertEqual(self.data_store.contacts[0]["client_id"], body.get("data"))
         self.assertEqual(self.data_store.contacts[0]["description"], "Primary Contact")
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_update_a_client(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "first": "name",
+                                                          "last": "lastname",
+                                                          "email": "email@here.invalid",
+                                                          "uber_login": "login",
+                                                          "uber_pass": "password"}),
+                                 content="1")
+
+            self._assert_success(c.post('api/2.0/', data={"method": "client.update",
+                                                          "client_id": "1",
+                                                          "first": "name-updated",
+                                                          "last": "lastname-updated",
+                                                          "email": "email-updated@here.invalid",
+                                                          "uber_login": "login-updated"}),
+                                 content=True)
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.get", "client_id": "1"}),
+                content={
+                    "clientid": "1",
+                    "first": "name-updated",
+                    "last": "lastname-updated",
+                    "email": "email-updated@here.invalid",
+                    "login": "login-updated"
+                }
+            )
 
     def test_client_get_returns_successfully(self):
         with self.app.test_client() as c:
@@ -330,7 +360,6 @@ class TestClientModule(unittest.TestCase):
         )
 
     def test_client_cc_add_is_successful(self):
-
         with self.app.test_client() as c:
             resp = c.post(
                 'api/2.0/',
@@ -382,7 +411,7 @@ class TestClientModule(unittest.TestCase):
                 "error_code": None,
                 "error_message": "",
                 "status": True
-             }
+            }
         )
 
     def test_client_cc_update_fails_returns_error(self):
@@ -402,7 +431,7 @@ class TestClientModule(unittest.TestCase):
                 "error_code": 999,
                 "error_message": "oh fail",
                 "status": False
-             }
+            }
         )
 
     def test_client_cc_info_with_billing_info_id(self):

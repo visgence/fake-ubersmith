@@ -51,6 +51,10 @@ class Client(Base):
             function=self.client_add
         )
         entity.register_endpoints(
+            ubersmith_method='client.update',
+            function=self.client_update
+        )
+        entity.register_endpoints(
             ubersmith_method='client.contact_add',
             function=self.contact_add
         )
@@ -88,6 +92,19 @@ class Client(Base):
 
         return response(data=client_id)
 
+    def client_update(self, form_data):
+        client_id = form_data.get("client_id")
+
+        client = next(iter(filter(lambda e: e["clientid"] == client_id, self.data_store.clients)))
+        self.logger.info("Updating client {} with {}".format(client["clientid"], form_data))
+
+        self._update_if_present(client, "first", form_data, "first")
+        self._update_if_present(client, "last", form_data, "last")
+        self._update_if_present(client, "email", form_data, "email")
+        self._update_if_present(client, "login", form_data, "uber_login")
+
+        return response(data=True)
+
     def client_get(self, form_data):
         client_id = form_data.get("client_id") or form_data.get("user_login")
         client = next(
@@ -99,6 +116,9 @@ class Client(Base):
         )
         if client is not None:
             client.pop("contact_id")
+            if "uber_pass" in client:
+                client.pop("uber_pass")
+
             self.logger.info("client data being returned {}".format(client))
             return response(data=client)
         else:
@@ -147,16 +167,16 @@ class Client(Base):
     def client_cc_add(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
             return response(
-               error_code=self.credit_card_response.code,
-               message=self.credit_card_response.message
+                error_code=self.credit_card_response.code,
+                message=self.credit_card_response.message
             )
         return response(data=self.credit_card_response)
 
     def client_cc_update(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
             return response(
-               error_code=self.credit_card_response.code,
-               message=self.credit_card_response.message
+                error_code=self.credit_card_response.code,
+                message=self.credit_card_response.message
             )
         return response(data=True)
 
@@ -217,3 +237,12 @@ class Client(Base):
         return response(data=contact) if contact else response(
             error_code=1, message="Invalid {} specified.".format(matcher_key)
         )
+
+    def _update_if_present(self, target, target_key, source, source_key):
+        try:
+            value = source[source_key]
+        except KeyError:
+            return
+
+        self.logger.debug("Setting {} to {}".format(target_key, value))
+        target[target_key] = value
