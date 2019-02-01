@@ -118,6 +118,8 @@ class Client(Base):
             client.pop("contact_id")
             if "uber_pass" in client:
                 client.pop("uber_pass")
+            if form_data.get("acls") == "1":
+                client["acls"] = []
 
             self.logger.info("client data being returned {}".format(client))
             return response(data=client)
