@@ -14,10 +14,11 @@
 import json
 from unittest import mock
 
+from flask import Flask
+
 from fake_ubersmith.api.adapters.data_store import DataStore
 from fake_ubersmith.api.methods.client import Client
 from fake_ubersmith.api.ubersmith import FakeUbersmithError, UbersmithBase
-from flask import Flask
 from tests.unit.api.methods import ApiTestBase
 
 
@@ -116,6 +117,22 @@ class TestClientModule(ApiTestBase):
                 "status": True
             }
         )
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_get_returns_successfully_with_acls_returns_an_empty_list(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "first": "John"}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.get", "client_id": "1", "acls": "1"}),
+                content={
+                    "clientid": "1",
+                    "first": "John",
+                    "acls": []
+                })
 
     def test_client_get_with_user_login_returns_successfully(self):
         self.data_store.clients = [{"clientid": "1", "contact_id": '0'}]
