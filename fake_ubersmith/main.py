@@ -25,13 +25,25 @@ from fake_ubersmith.api.methods.vendor_modules.iweb import IWeb
 from fake_ubersmith.api.ubersmith import UbersmithBase
 
 
-def _get_logger(logging_app):
+class HealthCheckFilter(logging.Filter):
+
+    def filter(self, record):
+        return 'GET /status ' not in record.msg
+
+
+def setup_logging():
+    root_logger = logging.getLogger()
+
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(
         '[%(asctime)s] %(levelname)s in %(module)s: %(message)s', "%Y-%m-%d %H:%M:%S")
     )
-    logging_app.logger.addHandler(handler)
-    logging_app.logger.setLevel(logging.INFO)
+    handler.addFilter(HealthCheckFilter())
+
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.DEBUG)
+
+    root_logger.debug("LOGGING IS OPERATIONAL")
 
 
 def run():
@@ -52,9 +64,10 @@ def run():
 
     base_uber_api.hook_to(app)
 
-    _get_logger(app)
+    setup_logging()
 
     app.run(host="0.0.0.0", port=port)
+
 
 if __name__ == '__main__':
     run()
