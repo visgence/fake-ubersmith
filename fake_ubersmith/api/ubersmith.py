@@ -58,7 +58,11 @@ class UbersmithBase(Base):
             self.logger.info("Will raise because crash-mode is enable")
             raise FakeUbersmithError(message="Crash mode was enabled")
 
-        return self.methods[method](data)
+        try:
+            return self.methods[method](data)
+        except Exception:
+            self.logger.debug("Endpoint raised error", exc_info=True)
+            raise
 
 
 class FakeUbersmithError(Exception):
