@@ -24,6 +24,7 @@ from tests.unit.api.methods import ApiTestBase
 
 class TestClientModule(ApiTestBase):
     def setUp(self):
+        self.maxDiff = 9001
         self.data_store = DataStore()
         self.client = Client(self.data_store)
 
@@ -174,26 +175,122 @@ class TestClientModule(ApiTestBase):
             }
         )
 
-    def test_client_contact_add_creates_a_contact(self):
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_add_creates_a_contact(self, random_id_mock):
+        random_id_mock.return_value = 1
         with self.app.test_client() as c:
-            resp = c.post(
-                'api/2.0/',
-                data={
-                    "method": "client.contact_add",
-                    "first": "John",
-                    "last": "Smith",
-                    "email": "john.smith@invalid.com",
-                    "uber_login": "john",
-                    "uber_pass": "smith"
-                }
-            )
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_add",
+                                            "client_id": "12345",
+                                            "real_name": "John smith",
+                                            "description": "Describe me",
+                                            "phone": "Mine phone",
+                                            "email": "john.smith@invalid.com",
+                                            "login": "john",
+                                            "password": "smith"}),
+                                 content="1")
 
-        body = json.loads(resp.data.decode('utf-8'))
-        self.assertEqual(resp.status_code, 200)
-        self.assertIsNone(body.get("error_code"))
-        self.assertTrue(body.get("status"))
-        self.assertEqual(body.get("error_message"), "")
-        self.assertIsInstance(body.get("data"), str)
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_get", "contact_id": "1"}),
+                content={
+                    "contact_id": "1",
+                    "client_id": "12345",
+                    "real_name": "John smith",
+                    "email_name": "john.smith",
+                    "email_domain": "invalid.com",
+                    "login": "john",
+                    "password": "{ssha1}whatver it's hashed",
+                    "password_timeout": "0",
+                    "password_changed": "1549657344",
+                    "description": "Describe me",
+                    "phone": "Mine phone",
+                    "email": "john.smith@invalid.com",
+                    "first": "John smith",
+                    "last": ""
+                })
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_get_by_user_login(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_add",
+                                            "client_id": "12345",
+                                            "real_name": "John smith",
+                                            "description": "Describe me",
+                                            "phone": "Mine phone",
+                                            "email": "john.smith@invalid.com",
+                                            "login": "john",
+                                            "password": "smith"}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_get", "user_login": "john"}),
+                content={
+                    "contact_id": "1",
+                    "client_id": "12345",
+                    "real_name": "John smith",
+                    "email_name": "john.smith",
+                    "email_domain": "invalid.com",
+                    "login": "john",
+                    "password": "{ssha1}whatver it's hashed",
+                    "password_timeout": "0",
+                    "password_changed": "1549657344",
+                    "description": "Describe me",
+                    "phone": "Mine phone",
+                    "email": "john.smith@invalid.com",
+                    "first": "John smith",
+                    "last": ""
+                })
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_update(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_add",
+                                            "client_id": "12345",
+                                            "real_name": "John smith",
+                                            "description": "Describe me",
+                                            "phone": "Mine phone",
+                                            "email": "john.smith@invalid.com",
+                                            "login": "john",
+                                            "password": "smith"}),
+                                 content="1")
+
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_update",
+                                            "contact_id": "1",
+                                            "real_name": "John smith-UPDATED",
+                                            "description": "Describe me-UPDATED",
+                                            "phone": "Mine phone-UPDATED",
+                                            "email": "john.smith-UPDATED@invalid.com-UPDATED",
+                                            "login": "john-UPDATED",
+                                            "password": "smith-UPDATED"}),
+                                 content=True)
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_get", "contact_id": "1"}),
+                content={
+                    "contact_id": "1",
+                    "client_id": "12345",
+                    "real_name": "John smith-UPDATED",
+                    "email_name": "john.smith-UPDATED",
+                    "email_domain": "invalid.com-UPDATED",
+                    "login": "john-UPDATED",
+                    "password": "{ssha1}whatver it's hashed",
+                    "password_timeout": "0",
+                    "password_changed": "1549657344",
+                    "description": "Describe me-UPDATED",
+                    "phone": "Mine phone-UPDATED",
+                    "email": "john.smith-UPDATED@invalid.com-UPDATED",
+                    "first": "John smith-UPDATED",
+                    "last": ""
+                })
 
     def test_client_contact_get_returns_error_when_empty_payload_provided(self):
         with self.app.test_client() as c:
@@ -257,31 +354,6 @@ class TestClientModule(ApiTestBase):
             }
         )
 
-    def test_client_contact_get_with_contact_id_returns_a_contact(self):
-        a_contact = {"contact_id": "100"}
-
-        self.data_store.contacts.append(a_contact)
-
-        with self.app.test_client() as c:
-            resp = c.post(
-                'api/2.0/',
-                data={
-                    "method": "client.contact_get",
-                    "contact_id": "100",
-                }
-            )
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(
-            json.loads(resp.data.decode('utf-8')),
-            {
-                "data": a_contact,
-                "error_code": None,
-                "error_message": "",
-                "status": True
-            }
-        )
-
     def test_client_contact_list_returns_contacts_for_given_client_id(self):
         contact_1 = {
             "contact_id": '1',
@@ -342,37 +414,6 @@ class TestClientModule(ApiTestBase):
                 "error_code": 1,
                 "error_message": "Invalid client_id specified.",
                 "status": False
-            }
-        )
-
-    def test_client_contact_get_with_user_login_returns_a_contact(self):
-        a_contact = {
-            "contact_id": "100",
-            "first": "John",
-            "last": "Smith",
-            "email": "john.smith@invalid.com",
-            "uber_login": "john",
-        }
-
-        self.data_store.contacts.append(a_contact)
-
-        with self.app.test_client() as c:
-            resp = c.post(
-                'api/2.0/',
-                data={
-                    "method": "client.contact_get",
-                    "user_login": "john",
-                }
-            )
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(
-            json.loads(resp.data.decode('utf-8')),
-            {
-                "data": a_contact,
-                "error_code": None,
-                "error_message": "",
-                "status": True
             }
         )
 

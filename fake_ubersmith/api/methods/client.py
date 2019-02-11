@@ -66,6 +66,10 @@ class Client(Base):
             ubersmith_method='client.contact_list',
             function=self.contact_list
         )
+        entity.register_endpoints(
+            ubersmith_method='client.contact_update',
+            function=self.contact_update
+        )
 
     def client_add(self, form_data):
         client_id = str(a_random_id())
@@ -145,7 +149,7 @@ class Client(Base):
         if "user_login" in form_data:
             self.logger.info("Looking up contact info by user_login")
             return self._get_contact_response(
-                "uber_login", 'user_login', form_data['user_login']
+                "login", 'user_login', form_data['user_login']
             )
         elif "contact_id" in form_data:
             self.logger.info("Looking up contact info by contact_id")
@@ -165,6 +169,21 @@ class Client(Base):
 
         self.logger.error("No valid client_id specified")
         return response(error_code=1, message="No valid client ID specified")
+
+    def contact_update(self, form_data):
+        contact_id = form_data.get("contact_id")
+
+        contact = next(iter(filter(lambda e: e["contact_id"] == contact_id, self.data_store.contacts)))
+        self.logger.info("Updating contact {} with {}".format(contact["contact_id"], form_data))
+
+        self._update_if_present(contact, "real_name", form_data, "real_name")
+        self._update_if_present(contact, "description", form_data, "description")
+        self._update_if_present(contact, "phone", form_data, "phone")
+        self._update_if_present(contact, "email", form_data, "email")
+        self._update_if_present(contact, "login", form_data, "login")
+        self._update_if_present(contact, "password", form_data, "password")
+
+        return response(data=True)
 
     def client_cc_add(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
@@ -236,7 +255,7 @@ class Client(Base):
 
         self.logger.info("Getting contact info: {}".format(contact))
 
-        return response(data=contact) if contact else response(
+        return response(data=_format_contact_get(contact)) if contact else response(
             error_code=1, message="Invalid {} specified.".format(matcher_key)
         )
 
@@ -248,3 +267,22 @@ class Client(Base):
 
         self.logger.debug("Setting {} to {}".format(target_key, value))
         target[target_key] = value
+
+
+def _format_contact_get(contact):
+    output = contact.copy()
+    if "@" in output["email"]:
+        email_fields = output["email"].split("@")
+    else:
+        email_fields = "", ""
+
+    output["email_name"], output["email_domain"] = email_fields
+
+    output["password"] = "{ssha1}whatver it's hashed"
+    output["password_timeout"] = "0"
+    output["password_changed"] = "1549657344"
+
+    output["first"] = output["real_name"]
+    output["last"] = ""
+
+    return output
