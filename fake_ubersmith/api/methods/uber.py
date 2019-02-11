@@ -48,10 +48,10 @@ class Uber(Base):
         )
 
     def check_login(self, form_data):
-        data = self._get_client(form_data['login'], form_data['pass'])
+        data = self._get_login_info(form_data['login'], form_data['pass'])
 
         if data:
-            data['type'] = 'client'
+
             self.logger.info("Login successful. Client info: {}".format(data))
             return response(data=data)
 
@@ -178,27 +178,32 @@ class Uber(Base):
     def acl_resource_list(self, _):
         return response(data=self.data_store.acl_resources)
 
-    def _get_client(self, username, password):
-        def _build_payload(
-                client_id, contact_id, login, full_name=None, email=None
-        ):
+    def _get_login_info(self, username, password):
+        def _build_payload(id, client_id, contact_id, login, full_name, email, type):
             return {
+                "id": id,
                 "client_id": client_id,
                 "contact_id": contact_id,
                 "login": login,
-                "fullname": full_name or "A Full Name",
-                "email": email
+                "fullname": full_name,
+                "email": email,
+                "type": type,
+                'last_login': None,
+                'password_changed': '1549380089',
+                'password_timeout': '0',
             }
 
         def _get_contact():
             return next(
                 (
                     _build_payload(
-                        c['client_id'],
-                        c["contact_id"],
-                        c["login"],
-                        c.get("real_name"),
-                        c.get("email")
+                        id="{}-{}".format(c["client_id"], c["contact_id"]),
+                        client_id=c["client_id"],
+                        contact_id=c["contact_id"],
+                        login=c["login"],
+                        full_name=c.get("real_name", ""),
+                        email=c.get("email") or "@",
+                        type="contact"
                     )
                     for c in self.data_store.contacts
                     if c['login'] == username and c['password'] == password
@@ -209,11 +214,13 @@ class Uber(Base):
         return next(
             (
                 _build_payload(
-                    c['clientid'],
-                    int(c["contact_id"]),
-                    c["login"],
-                    "{} {}".format(c.get("first"), c.get("last")),
-                    c.get("email")
+                    id=c['clientid'],
+                    client_id=c['clientid'],
+                    contact_id=0,
+                    login=c["login"],
+                    full_name=" ".join(filter(lambda e: e, [c.get("first"), c.get("last")])),
+                    email=c.get("email", ""),
+                    type="client"
                 )
                 for c in self.data_store.clients
                 if c['login'] == username and c['uber_pass'] == password

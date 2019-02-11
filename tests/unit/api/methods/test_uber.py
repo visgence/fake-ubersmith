@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
+from unittest import mock
+
+from flask import Flask
 
 from fake_ubersmith.api.adapters.data_store import DataStore
+from fake_ubersmith.api.methods.client import Client
 from fake_ubersmith.api.methods.uber import Uber
 from fake_ubersmith.api.ubersmith import FakeUbersmithError, UbersmithBase
-from flask import Flask
 from tests.unit.api.methods import ApiTestBase
 
 
@@ -25,11 +28,13 @@ class TestUberModule(ApiTestBase):
     def setUp(self):
         self.data_store = DataStore()
         self.uber = Uber(self.data_store)
+        self.client = Client(self.data_store)
 
         self.app = Flask(__name__)
         self.base_uber_api = UbersmithBase(self.data_store)
 
         self.uber.hook_to(self.base_uber_api)
+        self.client.hook_to(self.base_uber_api)
         self.base_uber_api.hook_to(self.app)
 
     def test_service_plan_get_returns_if_service_plan_found(self):
@@ -140,45 +145,68 @@ class TestUberModule(ApiTestBase):
             }
         )
 
-    def test_check_login_succesfully_for_client(self):
-        self.data_store.clients = [
-            {
-                'clientid': '1',
-                'contact_id': '0',
-                'first': 'John',
-                'last': 'Smith',
-                'email': 'john.smith@invalid.com',
-                'login': 'john',
-                'uber_pass': 'smith',
-            }
-        ]
-
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_check_login_succesfully_for_client(self, random_id_mock):
+        random_id_mock.return_value = 1
         with self.app.test_client() as c:
-            resp = c.post(
-                'api/2.0/',
-                data={
-                    "method": "uber.check_login",
-                    "login": "john",
-                    "pass": "smith"
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "first": "name",
+                                                          "last": "lastname",
+                                                          "email": "email@here.invalid",
+                                                          "uber_login": "login",
+                                                          "uber_pass": "password"}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/',
+                       data={
+                           "method": "uber.check_login",
+                           "login": "login",
+                           "pass": "password"
+                       }),
+                content={
+                    "id": "1",
+                    "login": "login",
+                    "client_id": "1",
+                    "contact_id": 0,
+                    "fullname": "name lastname",
+                    "email": "email@here.invalid",
+                    "last_login": None,
+                    "password_timeout": "0",
+                    "password_changed": "1549380089",
+                    "type": "client"
                 }
             )
 
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(
-            json.loads(resp.data.decode('utf-8')),
-            {
-                "data": {
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_check_login_succesfully_for_client_bare_info(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "uber_login": "login",
+                                                          "uber_pass": "password"}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/',
+                       data={
+                           "method": "uber.check_login",
+                           "login": "login",
+                           "pass": "password"
+                       }),
+                content={
+                    "id": "1",
+                    "login": "login",
                     "client_id": "1",
                     "contact_id": 0,
-                    "type": "client",
-                    "login": "john",
-                    "email": "john.smith@invalid.com",
-                    "fullname": "John Smith"
-                },
-                "error_code": None,
-                "error_message": "", "status": True
-            }
-        )
+                    "fullname": "",
+                    "email": "",
+                    "last_login": None,
+                    "password_timeout": "0",
+                    "password_changed": "1549380089",
+                    "type": "client"
+                }
+            )
 
     def test_check_login_failed(self):
         self.data_store.clients = [
@@ -213,45 +241,73 @@ class TestUberModule(ApiTestBase):
             }
         )
 
-    def test_check_login_sucessfully_for_contact(self):
-        self.data_store.contacts = [
-            {
-                'client_id': '1234',
-                'contact_id': '1',
-                'real_name': 'Line Doe',
-                'email': 'line.doe@invalid.com',
-                'login': 'line',
-                'password': 'doe',
-            }
-        ]
-
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_check_login_successfully_for_contact(self, random_id_mock):
+        random_id_mock.return_value = 1
         with self.app.test_client() as c:
-            resp = c.post(
-                'api/2.0/',
-                data={
-                    "method": "uber.check_login",
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_add",
+                                            "client_id": "12345",
+                                            "real_name": "my real name",
+                                            "email": "wat@wat.invalid",
+                                            "login": "line",
+                                            "password": "doe"}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/',
+                       data={
+                           "method": "uber.check_login",
+                           "login": "line",
+                           "pass": "doe"
+                       }),
+                content={
+                    "id": "12345-1",
                     "login": "line",
-                    "pass": "doe"
+                    "client_id": "12345",
+                    "contact_id": "1",
+                    "fullname": "my real name",
+                    "email": "wat@wat.invalid",
+                    "last_login": None,
+                    "password_timeout": "0",
+                    "password_changed": "1549380089",
+                    "type": "contact"
                 }
             )
 
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(
-            json.loads(resp.data.decode('utf-8')),
-            {
-                "data": {
-                    "client_id": "1234",
-                    "contact_id": "1",
-                    "type": "client",
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_check_login_successfully_for_contact_bare_info(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_add",
+                                            "client_id": "12345",
+                                            "login": "line",
+                                            "password": "doe"}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/',
+                       data={
+                           "method": "uber.check_login",
+                           "login": "line",
+                           "pass": "doe"
+                       }),
+                content={
+                    "id": "12345-1",
                     "login": "line",
-                    "email": "line.doe@invalid.com",
-                    "fullname": "Line Doe"
-                },
-                "error_code": None,
-                "error_message": "",
-                "status": True
-            }
-        )
+                    "client_id": "12345",
+                    "contact_id": "1",
+                    "fullname": "",
+                    "email": "@",
+                    "last_login": None,
+                    "password_timeout": "0",
+                    "password_changed": "1549380089",
+                    "type": "contact"
+                }
+            )
 
     def test_get_admin_roles_when_passing_valid_user_id_and_role_id(self):
         role_id = "some_role_id"

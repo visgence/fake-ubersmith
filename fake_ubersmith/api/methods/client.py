@@ -271,7 +271,7 @@ class Client(Base):
 
 def _format_contact_get(contact):
     output = contact.copy()
-    if "@" in output["email"]:
+    if "@" in output.get("email", ""):
         email_fields = output["email"].split("@")
     else:
         email_fields = "", ""
@@ -282,7 +282,7 @@ def _format_contact_get(contact):
     output["password_timeout"] = "0"
     output["password_changed"] = "1549657344"
 
-    output["first"] = output["real_name"]
+    output["first"] = output.get("real_name", "")
     output["last"] = ""
 
     return output
