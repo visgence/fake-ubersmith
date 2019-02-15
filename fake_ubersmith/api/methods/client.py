@@ -111,13 +111,7 @@ class Client(Base):
 
     def client_get(self, form_data):
         client_id = form_data.get("client_id") or form_data.get("user_login")
-        client = next(
-            (
-                client.copy() for client in self.data_store.clients
-                if client["clientid"] == client_id
-            ),
-            None
-        )
+        client = self._client_get(client_id)
         if client is not None:
             client.pop("contact_id")
             if "uber_pass" in client:
@@ -133,6 +127,16 @@ class Client(Base):
                 error_code=1,
                 message="Client ID '{}' not found.".format(client_id)
             )
+
+    def _client_get(self, client_id):
+        client = next(
+            (
+                _format_client_get(client.copy()) for client in self.data_store.clients
+                if client["clientid"] == client_id
+            ),
+            None
+        )
+        return client
 
     def contact_add(self, form_data):
         contact_id = str(a_random_id())
@@ -252,12 +256,16 @@ class Client(Base):
             ),
             None
         )
+        if contact:
+            client = self._client_get(contact["client_id"])
 
-        self.logger.info("Getting contact info: {}".format(contact))
+            self.logger.info("Getting contact info: {} for client {}".format(contact, client))
 
-        return response(data=_format_contact_get(contact)) if contact else response(
-            error_code=1, message="Invalid {} specified.".format(matcher_key)
-        )
+            return response(data=_format_contact_get(contact, client))
+        else:
+            return response(
+                error_code=1, message="Invalid {} specified.".format(matcher_key)
+            )
 
     def _update_if_present(self, target, target_key, source, source_key):
         try:
@@ -269,7 +277,7 @@ class Client(Base):
         target[target_key] = value
 
 
-def _format_contact_get(contact):
+def _format_contact_get(contact, client):
     output = contact.copy()
     if "@" in output.get("email", ""):
         email_fields = output["email"].split("@")
@@ -285,4 +293,13 @@ def _format_contact_get(contact):
     output["first"] = output.get("real_name", "")
     output["last"] = ""
 
+    if client is not None:
+        output["listed_company"] = client["listed_company"]
+
     return output
+
+
+def _format_client_get(client):
+    client["listed_company"] = client.get("company", "") \
+                               or "{}, {}".format(client.get("last", ""), client.get("first", ""))
+    return client

@@ -21,7 +21,7 @@ class TestUbersmithClient(Base):
         client_id = self.ub_client.client.add(uber_login='username')
 
         result = self.ub_client.client.get(client_id=client_id)
-        self.assertDictEqual(result, {'clientid': client_id, 'login': 'username'})
+        self.assertDictEqual(result, {'clientid': client_id, 'login': 'username', 'listed_company': ', '})
 
         result = self.ub_client.client.contact_list(client_id=client_id)
 
