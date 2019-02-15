@@ -87,7 +87,8 @@ class TestClientModule(ApiTestBase):
                     "first": "name-updated",
                     "last": "lastname-updated",
                     "email": "email-updated@here.invalid",
-                    "login": "login-updated"
+                    "login": "login-updated",
+                    "listed_company": "lastname-updated, name-updated"
                 }
             )
 
@@ -112,7 +113,7 @@ class TestClientModule(ApiTestBase):
         self.assertEqual(
             json.loads(resp.data.decode('utf-8')),
             {
-                "data": {"clientid": client_id, "first": "John"},
+                "data": {"clientid": client_id, "first": "John", "listed_company": ", John"},
                 "error_code": None,
                 "error_message": "",
                 "status": True
@@ -132,7 +133,104 @@ class TestClientModule(ApiTestBase):
                 content={
                     "clientid": "1",
                     "first": "John",
-                    "acls": []
+                    "acls": [],
+                    "listed_company": ", John"
+                })
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_get_returns_listed_company_that_is_the_company(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "company": "CompanyName"}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.get", "client_id": "1"}),
+                content={
+                    "clientid": "1",
+                    "company": "CompanyName",
+                    "listed_company": "CompanyName"
+                })
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_get_returns_listed_company_that_is_first_and_last_when_no_company(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "first": "John",
+                                                          "last": "Smith",
+                                                          "company": ""}),
+                                 content="1")
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.get", "client_id": "1"}),
+                content={
+                    "clientid": "1",
+                    "company": "",
+                    "listed_company": "Smith, John",
+                    "first": "John",
+                    "last": "Smith"
+                })
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_contact_get_returns_listed_company_that_is_the_company(self, random_id_mock):
+        random_id_mock.side_effect = [1, 2, 3]
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "company": "CompanyName"}),
+                                 content="1")
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_add",
+                                            "client_id": "1"
+                                        }),
+                                 content="3")
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_get", "contact_id": "3"}),
+                content={
+                    "contact_id": "3",
+                    "client_id": "1",
+                    "email_name": "",
+                    "email_domain": "",
+                    "password": "{ssha1}whatver it's hashed",
+                    "password_timeout": "0",
+                    "password_changed": "1549657344",
+                    "first": "",
+                    "last": "",
+                    "listed_company": "CompanyName"
+                })
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_contact_get_returns_listed_company_that_is_first_and_last_when_no_company(self, random_id_mock):
+        random_id_mock.side_effect = [1, 2, 3]
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "first": "John",
+                                                          "last": "Smith",
+                                                          "company": ""}),
+                                 content="1")
+            self._assert_success(c.post('api/2.0/',
+                                        data={
+                                            "method": "client.contact_add",
+                                            "client_id": "1"
+                                        }),
+                                 content="3")
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_get", "contact_id": "3"}),
+                content={
+                    "contact_id": "3",
+                    "client_id": "1",
+                    "email_name": "",
+                    "email_domain": "",
+                    "password": "{ssha1}whatver it's hashed",
+                    "password_timeout": "0",
+                    "password_changed": "1549657344",
+                    "first": "",
+                    "last": "",
+                    "listed_company": "Smith, John"
                 })
 
     def test_client_get_with_user_login_returns_successfully(self):
@@ -148,7 +246,7 @@ class TestClientModule(ApiTestBase):
         self.assertEqual(
             json.loads(resp.data.decode('utf-8')),
             {
-                "data": {"clientid": "1"},
+                "data": {"clientid": "1", "listed_company": ", "},
                 "error_code": None,
                 "error_message": "",
                 "status": True
