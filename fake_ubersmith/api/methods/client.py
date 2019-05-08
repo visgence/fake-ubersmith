@@ -70,6 +70,14 @@ class Client(Base):
             ubersmith_method='client.contact_update',
             function=self.contact_update
         )
+        entity.register_endpoints(
+            ubersmith_method='client.contact_permission_list',
+            function=self.contact_permission_list
+        )
+        entity.register_endpoints(
+            ubersmith_method='client.contact_permission_set',
+            function=self.contact_permission_set
+        )
 
     def client_add(self, form_data):
         client_id = str(a_random_id())
@@ -129,13 +137,10 @@ class Client(Base):
             )
 
     def _client_get(self, client_id):
-        client = next(
-            (
-                _format_client_get(client.copy()) for client in self.data_store.clients
-                if client["clientid"] == client_id
-            ),
-            None
-        )
+        client = next((
+            _format_client_get(client.copy()) for client in self.data_store.clients if client["clientid"] == client_id
+        ), None)
+
         return client
 
     def contact_add(self, form_data):
@@ -177,7 +182,7 @@ class Client(Base):
     def contact_update(self, form_data):
         contact_id = form_data.get("contact_id")
 
-        contact = next(iter(filter(lambda e: e["contact_id"] == contact_id, self.data_store.contacts)))
+        contact = self._get_contact_from_id(contact_id)
         self.logger.info("Updating contact {} with {}".format(contact["contact_id"], form_data))
 
         self._update_if_present(contact, "real_name", form_data, "real_name")
@@ -188,6 +193,47 @@ class Client(Base):
         self._update_if_present(contact, "password", form_data, "password")
 
         return response(data=True)
+
+    def contact_permission_list(self, form_data):
+        contact_id = form_data.get("contact_id")
+        resource_name = form_data.get("resource_name")
+        contact = self._get_contact_from_id(contact_id)
+
+        self.logger.info("Gathering permission list for contact_id : {}".format(contact_id))
+
+        return response(contact[resource_name])
+
+    def contact_permission_set(self, form_data):
+        contact_id = form_data.get("contact_id")
+        resource_name = form_data.get("resource_name")
+        action = form_data.get("action")
+        type = form_data.get("type")
+
+        effective = dict(read=0, create=0, update=0, delete=0)
+
+        contact = self._get_contact_from_id(contact_id)
+
+        if not contact.get(resource_name):
+            contact[resource_name] = {
+                "123": {
+                    "resource_id": "123",
+                    "name": resource_name,
+                    "parent_id": "",
+                    "lft": "",
+                    "rgt": "",
+                    "active": "1",
+                    "label": "Manage Contacts",
+                    "actions": ["2", "1", "3", "4"],
+                    "action": [],
+                    "effective": effective
+                }
+            }
+        else:
+            effective.update(contact[resource_name]['123'].get('effective'))
+
+        contact[resource_name]['123']['effective'][action] = 1 if type == "allow" else False
+
+        return response(data='')
 
     def client_cc_add(self, form_data):
         if isinstance(self.credit_card_response, FakeUbersmithError):
@@ -237,6 +283,9 @@ class Client(Base):
             )
         return response(data=True)
 
+    def _get_contact_from_id(self, contact_id):
+        return next(iter(filter(lambda e: e["contact_id"] == contact_id, self.data_store.contacts)))
+
     def _get_all_contacts_response(self, lookup_key, matcher_key, matcher_value):
         contacts = {
             contact['contact_id']: contact
@@ -249,13 +298,7 @@ class Client(Base):
         )
 
     def _get_contact_response(self, lookup_key, matcher_key, matcher_value):
-        contact = next(
-            (
-                contact for contact in self.data_store.contacts
-                if contact[lookup_key] == matcher_value
-            ),
-            None
-        )
+        contact = next((contact for contact in self.data_store.contacts if contact[lookup_key] == matcher_value), None)
         if contact:
             client = self._client_get(contact["client_id"])
 
