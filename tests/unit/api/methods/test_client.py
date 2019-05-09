@@ -700,3 +700,240 @@ class TestClientModule(ApiTestBase):
                 "status": False
             }
         )
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_permission_set_and_list_one_negative_contact_permissions(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            c.post('api/2.0/',
+                   data={
+                       "method": "client.contact_add",
+                       "client_id": "12345",
+                       "real_name": "John smith",
+                       "description": "Describe me",
+                       "phone": "Mine phone",
+                       "email": "john.smith@invalid.com",
+                       "login": "john",
+                       "password": "smith"})
+
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "create",
+                         "type": "deny"})
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_permission_list", "contact_id": "1",
+                                         "resource_name": "client.manage_contacts", "effective": "1"}),
+                content={'123': {'action': [],
+                                 'actions': ['2', '1', '3', '4'],
+                                 'active': '1',
+                                 'effective': {'create': False,
+                                               'delete': 0,
+                                               'read': 0,
+                                               'update': 0},
+                                 'label': 'Manage Contacts',
+                                 'lft': '',
+                                 'name': 'client.manage_contacts',
+                                 'parent_id': '',
+                                 'resource_id': '123',
+                                 'rgt': ''}})
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_permission_set_and_list_one_positive_contact_permissions(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            c.post('api/2.0/',
+                   data={
+                       "method": "client.contact_add",
+                       "client_id": "12345",
+                       "real_name": "John smith",
+                       "description": "Describe me",
+                       "phone": "Mine phone",
+                       "email": "john.smith@invalid.com",
+                       "login": "john",
+                       "password": "smith"})
+
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "create",
+                         "type": "allow"})
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_permission_list", "contact_id": "1",
+                                         "resource_name": "client.manage_contacts", "effective": "1"}),
+                content={'123': {'action': [],
+                                 'actions': ['2', '1', '3', '4'],
+                                 'active': '1',
+                                 'effective': {'create': 1,
+                                               'delete': 0,
+                                               'read': 0,
+                                               'update': 0},
+                                 'label': 'Manage Contacts',
+                                 'lft': '',
+                                 'name': 'client.manage_contacts',
+                                 'parent_id': '',
+                                 'resource_id': '123',
+                                 'rgt': ''}})
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_permission_set_and_list_all_negative_contact_permissions(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            c.post('api/2.0/',
+                   data={
+                       "method": "client.contact_add",
+                       "client_id": "12345",
+                       "real_name": "John smith",
+                       "description": "Describe me",
+                       "phone": "Mine phone",
+                       "email": "john.smith@invalid.com",
+                       "login": "john",
+                       "password": "smith"})
+
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "create",
+                         "type": "deny"})
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "read",
+                         "type": "deny"})
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "update",
+                         "type": "deny"})
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "delete",
+                         "type": "deny"})
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_permission_list", "contact_id": "1",
+                                         "resource_name": "client.manage_contacts", "effective": "1"}),
+                content={'123': {'action': [],
+                                 'actions': ['2', '1', '3', '4'],
+                                 'active': '1',
+                                 'effective': {'create': False,
+                                               'delete': False,
+                                               'read': False,
+                                               'update': False},
+                                 'label': 'Manage Contacts',
+                                 'lft': '',
+                                 'name': 'client.manage_contacts',
+                                 'parent_id': '',
+                                 'resource_id': '123',
+                                 'rgt': ''}})
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_permission_set_and_list_all_positive_contact_permissions(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            c.post('api/2.0/',
+                   data={
+                       "method": "client.contact_add",
+                       "client_id": "12345",
+                       "real_name": "John smith",
+                       "description": "Describe me",
+                       "phone": "Mine phone",
+                       "email": "john.smith@invalid.com",
+                       "login": "john",
+                       "password": "smith"})
+
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "create",
+                         "type": "allow"})
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "read",
+                         "type": "allow"})
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "update",
+                         "type": "allow"})
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "delete",
+                         "type": "allow"})
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_permission_list", "contact_id": "1",
+                                         "resource_name": "client.manage_contacts", "effective": "1"}),
+                content={'123': {'action': [],
+                                 'actions': ['2', '1', '3', '4'],
+                                 'active': '1',
+                                 'effective': {'create': 1,
+                                               'delete': 1,
+                                               'read': 1,
+                                               'update': 1},
+                                 'label': 'Manage Contacts',
+                                 'lft': '',
+                                 'name': 'client.manage_contacts',
+                                 'parent_id': '',
+                                 'resource_id': '123',
+                                 'rgt': ''}})
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_permission_set_and_list_mixed_contact_permissions(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            c.post('api/2.0/',
+                   data={
+                       "method": "client.contact_add",
+                       "client_id": "12345",
+                       "real_name": "John smith",
+                       "description": "Describe me",
+                       "phone": "Mine phone",
+                       "email": "john.smith@invalid.com",
+                       "login": "john",
+                       "password": "smith"})
+
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "create",
+                         "type": "allow"})
+            c.post('api/2.0/',
+                   data={"method": "client.contact_permission_set",
+                         "contact_id": "1",
+                         "resource_name": "client.manage_contacts",
+                         "action": "read",
+                         "type": "deny"})
+
+            self._assert_success(
+                c.post('api/2.0/', data={"method": "client.contact_permission_list", "contact_id": "1",
+                                         "resource_name": "client.manage_contacts", "effective": "1"}),
+                content={'123': {'action': [],
+                                 'actions': ['2', '1', '3', '4'],
+                                 'active': '1',
+                                 'effective': {'create': 1,
+                                               'delete': False,
+                                               'read': 0,
+                                               'update': 0},
+                                 'label': 'Manage Contacts',
+                                 'lft': '',
+                                 'name': 'client.manage_contacts',
+                                 'parent_id': '',
+                                 'resource_id': '123',
+                                 'rgt': ''}})
