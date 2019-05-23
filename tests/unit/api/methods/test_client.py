@@ -937,3 +937,22 @@ class TestClientModule(ApiTestBase):
                                  'parent_id': '',
                                  'resource_id': '123',
                                  'rgt': ''}})
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_client_contact_permission_list_without_previous_permission_set_does_not_fail(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            c.post('api/2.0/',
+                   data={
+                       "method": "client.contact_add",
+                       "client_id": "12345",
+                       "real_name": "John smith",
+                       "description": "Describe me",
+                       "phone": "Mine phone",
+                       "email": "john.smith@invalid.com",
+                       "login": "john",
+                       "password": "smith"})
+
+            resp = c.post('api/2.0/', data={"method": "client.contact_permission_list", "contact_id": "1",
+                                            "resource_name": "client.manage_contacts", "effective": "1"})
+            self.assertEqual(resp.status_code, 200)
