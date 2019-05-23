@@ -201,7 +201,7 @@ class Client(Base):
 
         self.logger.info("Gathering permission list for contact_id : {}".format(contact_id))
 
-        return response(contact[resource_name])
+        return response(contact.get(resource_name, default_permissions))
 
     def contact_permission_set(self, form_data):
         contact_id = form_data.get("contact_id")
@@ -346,3 +346,33 @@ def _format_client_get(client):
     client["listed_company"] = client.get("company", "") \
                                or "{}, {}".format(client.get("last", ""), client.get("first", ""))
     return client
+
+
+default_permissions = {
+    "status": True,
+    "error_code": None,
+    "error_message": "",
+    "data": {
+        "123": {
+            "resource_id": "123",
+            "name": "some permission name",
+            "parent_id": "456",
+            "lft": "1035",
+            "rgt": "1036",
+            "active": "1",
+            "label": "some permission label",
+            "actions": [
+                "2",
+                "1",
+                "3",
+                "4"
+            ],
+            "effective": {
+                "read": 0,
+                "create": 0,
+                "update": 0,
+                "delete": 0
+            }
+        }
+    }
+}
