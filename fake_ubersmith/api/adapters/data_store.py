@@ -31,6 +31,7 @@ class DataStore:
         self.acl_resources = {}
         self.acl_resources_inc_id = 0
         self.user_mapping = defaultdict(lambda: defaultdict(set))
+        self.metadatas = {}
 
     def flush(self):
         self.__init__()
