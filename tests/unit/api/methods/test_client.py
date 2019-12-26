@@ -92,6 +92,58 @@ class TestClientModule(ApiTestBase):
                 }
             )
 
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_update_a_client_metadata(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "first": "name",
+                                                          "last": "lastname",
+                                                          "email": "email@here.invalid",
+                                                          "uber_login": "login",
+                                                          "uber_pass": "password"}),
+                                 content="1")
+
+            self._assert_success(c.post('api/2.0/', data={"method": "client.update",
+                                                          "client_id": "1",
+                                                          "meta_fake_metadata": "La Grande Messe"}),
+                                 content=True)
+
+            self._assert_success(c.post('api/2.0/', data={"method": "client.update",
+                                                          "client_id": "1",
+                                                          "meta_fake_metadata2": "Les Antipodes"}),
+                                 content=True)
+
+            self._assert_success(c.post('api/2.0/', data={"method": "client.metadata_single",
+                                                          "client_id": "1",
+                                                          "variable": "fake_metadata"}),
+                                 content="La Grande Messe")
+
+            self._assert_success(c.post('api/2.0/', data={"method": "client.metadata_single",
+                                                          "client_id": "1",
+                                                          "variable": "fake_metadata2"}),
+                                 content="Les Antipodes")
+
+    @mock.patch("fake_ubersmith.api.methods.client.a_random_id")
+    def test_update_a_client_metadata_return_0_if_nothing_is_found(self, random_id_mock):
+        random_id_mock.return_value = 1
+        with self.app.test_client() as c:
+            self._assert_success(c.post('api/2.0/', data={"method": "client.add",
+                                                          "first": "name",
+                                                          "last": "lastname",
+                                                          "email": "email@here.invalid",
+                                                          "uber_login": "login",
+                                                          "uber_pass": "password"}),
+                                 content="1")
+            self._assert_success(c.post('api/2.0/', data={"method": "client.metadata_single",
+                                                          "client_id": "invalid_id",
+                                                          "variable": "fake_metadata"}),
+                                 content="0")
+            self._assert_success(c.post('api/2.0/', data={"method": "client.metadata_single",
+                                                          "client_id": "1",
+                                                          "variable": "invalid_metadata"}),
+                                 content="0")
+
     def test_client_get_returns_successfully(self):
         with self.app.test_client() as c:
             resp = c.post(

@@ -79,6 +79,11 @@ class Client(Base):
             function=self.contact_permission_set
         )
 
+        entity.register_endpoints(
+            ubersmith_method='client.metadata_single',
+            function=self.client_metadata_single
+        )
+
     def client_add(self, form_data):
         client_id = str(a_random_id())
 
@@ -114,6 +119,10 @@ class Client(Base):
         self._update_if_present(client, "last", form_data, "last")
         self._update_if_present(client, "email", form_data, "email")
         self._update_if_present(client, "login", form_data, "uber_login")
+
+        client_metadata = {k: v for k, v in form_data.items() if k.startswith('meta_')}
+        if len(client_metadata) >= 1:
+            self._update_client_metadata(client_id, client_metadata)
 
         return response(data=True)
 
@@ -283,6 +292,22 @@ class Client(Base):
             )
         return response(data=True)
 
+    def client_metadata_single(self, form_data):
+        client_id = form_data.get("client_id")
+        metadata_name = form_data.get("variable")
+
+        self.logger.info("Gathering metadata {} for client: {}".format(metadata_name, client_id))
+
+        client_metadata = self.data_store.metadatas.get(client_id)
+        if client_metadata is None:
+            return response(data="0")
+
+        metadata = client_metadata.get(metadata_name)
+        if metadata is None:
+            return response(data="0")
+
+        return response(data=metadata)
+
     def _get_contact_from_id(self, contact_id):
         return next(iter(filter(lambda e: e["contact_id"] == contact_id, self.data_store.contacts)))
 
@@ -318,6 +343,14 @@ class Client(Base):
 
         self.logger.debug("Setting {} to {}".format(target_key, value))
         target[target_key] = value
+
+    def _update_client_metadata(self, client_id, client_metadata):
+        if client_id not in self.data_store.metadatas:
+            self.data_store.metadatas[client_id] = {}
+
+        [self._update_if_present(self.data_store.metadatas[client_id], metadata_name.replace('meta_', ''),
+                                 client_metadata, metadata_name) for
+         metadata_name in client_metadata.keys()]
 
 
 def _format_contact_get(contact, client):
