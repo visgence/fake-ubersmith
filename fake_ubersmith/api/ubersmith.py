@@ -15,7 +15,7 @@ class UbersmithBase(Base):
         self.app.add_url_rule(
             '/api/2.0/',
             view_func=self._route_method,
-            methods=["POST"]
+            methods=["POST", "GET"]
         )
 
         self.register_endpoints(
@@ -47,8 +47,12 @@ class UbersmithBase(Base):
         ] and self.crash_mode
 
     def _route_method(self):
-        data = request.form.copy()
-        method = data.pop("method")
+        try:
+            data = request.form.copy()
+            method = data.pop("method")
+        except Exception as e:
+            data = request.form.copy()
+            method = request.args.get("method")
 
         self.logger.info(
             "Will call method '{}' with params '{}'".format(method, data)

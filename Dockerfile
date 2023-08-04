@@ -9,7 +9,9 @@ EXPOSE $APP_EXPOSED_PORT
 RUN apk add --no-cache --update \
     git \
     curl \
-    py-pip
+    py-pip \
+    php \
+    php-json
 
 COPY requirements.txt $APP_ROOT/
 COPY setup.py $APP_ROOT/

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pickle, time
+
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
 from fake_ubersmith.api.utils.response import response
@@ -45,6 +47,10 @@ class Client(Base):
         entity.register_endpoints(
             ubersmith_method='client.get',
             function=self.client_get
+        )
+        entity.register_endpoints(
+            ubersmith_method='client.get_all',
+            function=self.client_get_all
         )
         entity.register_endpoints(
             ubersmith_method='client.add',
@@ -84,26 +90,67 @@ class Client(Base):
             function=self.client_metadata_single
         )
 
+        entity.register_endpoints(
+            ubersmith_method='client.metadata_get',
+            function=self.client_metadata_single
+        )
+        entity.register_endpoints(
+            ubersmith_method='uber.attachment_get',
+            function=self.get_attachments
+        )
+        entity.register_endpoints(
+            ubersmith_method='uber.attachment_list',
+            function=self.get_attachments
+        )
+        entity.register_endpoints(
+            ubersmith_method='client.invoice_count',
+            function=self.get_invoice_count
+        )
+        entity.register_endpoints(
+            ubersmith_method='client.service_count_status',
+            function=self.get_attachments
+        )
+
+    def get_attachments(a, b):
+        return response(data=[])
+
+    def get_invoice_count(a, b):
+        return response(data=1)
+
     def client_add(self, form_data):
         client_id = str(a_random_id())
 
         client_data = form_data.copy()
         client_data["clientid"] = client_id
         client_data["contact_id"] = str(0)
+        client_data["email"] = client_data.get("email").replace(" ", "")
 
         if client_data.get("uber_login"):
-            client_data["login"] = client_data.get("uber_login")
+            client_data["login"] = client_data.get("uber_login").replace(" ", "")
             del client_data["uber_login"]
+        else:
+            client_data["login"] = client_data["login"].replace(" ", "")
+        if client_data.get("full_name"):
+            real_name=client_data.get("full_name")
+        else:
+            real_name="Real Name"
 
         self.logger.info("Adding client data: {}".format(client_data))
 
         self.data_store.clients.append(client_data)
+        pickle.dump( self.data_store.clients, open( "fixtures/client.p", "wb" ) )
         self.contact_add(
             dict(
                 client_id=client_id,
                 description="Primary Contact",
                 login="so_much_invalid_username",
-                password="so_much_invalid_password"
+                password="so_much_invalid_password",
+                real_name=real_name,
+                rwhois_contact=0,
+                created=int(time.time()),
+                active=1,
+                phone='1234567890',
+                email="contact1@example.com"
             )
         )
 
@@ -152,12 +199,23 @@ class Client(Base):
 
         return client
 
+    def client_get_all(self, form_data):
+        clients = next((
+            _format_client_get(client.copy()) for client in self.data_store.clients
+        ), None)
+
+        return response(data=clients)
+
     def contact_add(self, form_data):
         contact_id = str(a_random_id())
 
         contact_data = form_data.copy()
         contact_data["contact_id"] = contact_id
+        contact_data["rwhois_contact"] = 0
+        contact_data["login"] = "contact" + str(a_random_id())
+        contact_data["active"] = 1
         self.data_store.contacts.append(contact_data)
+        pickle.dump( self.data_store.contacts, open( "fixtures/contact.p", "wb" ) )
 
         self.logger.info("Contact info added: {}".format(contact_data))
 
@@ -200,6 +258,9 @@ class Client(Base):
         self._update_if_present(contact, "email", form_data, "email")
         self._update_if_present(contact, "login", form_data, "login")
         self._update_if_present(contact, "password", form_data, "password")
+        self._update_if_present(contact, "rwhois_contact", form_data, "rwhois_contact")
+        self._update_if_present(contact, "created", form_data, "created")
+        self._update_if_present(contact, "active", form_data, "active")
 
         return response(data=True)
 
@@ -300,11 +361,11 @@ class Client(Base):
 
         client_metadata = self.data_store.metadatas.get(client_id)
         if client_metadata is None:
-            return response(data="0")
+            return response(data=[])
 
         metadata = client_metadata.get(metadata_name)
         if metadata is None:
-            return response(data="0")
+            return response(data=[])
 
         return response(data=metadata)
 
