@@ -1,3 +1,4 @@
+"""client endpoints"""
 # Copyright 2017 Internap.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pickle, time
+import pickle
+import time
 
 from fake_ubersmith.api.base import Base
 from fake_ubersmith.api.ubersmith import FakeUbersmithError
@@ -21,6 +23,7 @@ from fake_ubersmith.api.utils.utils import a_random_id
 
 
 class Client(Base):
+    """Client base"""
     def __init__(self, data_store):
         super().__init__(data_store)
 
@@ -111,13 +114,18 @@ class Client(Base):
             function=self.get_attachments
         )
 
-    def get_attachments(a, b):
+    def get_attachments(self, form_data):
+        """get attachments"""
+        self.logger.info({f"Form data: {form_data}"})
         return response(data=[])
 
-    def get_invoice_count(a, b):
+    def get_invoice_count(self, form_data):
+        """get invoice count"""
+        self.logger.info({f"Form data: {form_data}"})
         return response(data=1)
 
     def client_add(self, form_data):
+        """client add"""
         client_id = str(a_random_id())
 
         client_data = form_data.copy()
@@ -135,7 +143,7 @@ class Client(Base):
         else:
             real_name="Real Name"
 
-        self.logger.info("Adding client data: {}".format(client_data))
+        self.logger.info(f"Adding client data: {client_data}")
 
         self.data_store.clients.append(client_data)
         pickle.dump( self.data_store.clients, open( "fixtures/client.p", "wb" ) )
@@ -157,10 +165,11 @@ class Client(Base):
         return response(data=client_id)
 
     def client_update(self, form_data):
+        """client update"""
         client_id = form_data.get("client_id")
 
         client = next(iter(filter(lambda e: e["clientid"] == client_id, self.data_store.clients)))
-        self.logger.info("Updating client {} with {}".format(client["clientid"], form_data))
+        self.logger.info(f"Updating client {client['clientid']} with {form_data}")
 
         self._update_if_present(client, "first", form_data, "first")
         self._update_if_present(client, "last", form_data, "last")
@@ -174,6 +183,7 @@ class Client(Base):
         return response(data=True)
 
     def client_get(self, form_data):
+        """client get"""
         client_id = form_data.get("client_id") or form_data.get("user_login")
         client = self._client_get(client_id)
         if client is not None:
@@ -183,16 +193,17 @@ class Client(Base):
             if form_data.get("acls") == "1":
                 client["acls"] = []
 
-            self.logger.info("client data being returned {}".format(client))
+            self.logger.info(f"client data being returned {client}")
             return response(data=client)
         else:
-            self.logger.info("Can't find client ID - {}".format(client_id))
+            self.logger.info(f"Can't find client ID - {client_id}")
             return response(
                 error_code=1,
-                message="Client ID '{}' not found.".format(client_id)
+                message=f"Client ID '{client_id}' not found."
             )
 
     def _client_get(self, client_id):
+        """_client get"""
         client = next((
             _format_client_get(client.copy()) for client in self.data_store.clients if client["clientid"] == client_id
         ), None)
@@ -200,13 +211,13 @@ class Client(Base):
         return client
 
     def client_get_all(self, form_data):
-        clients = next((
-            _format_client_get(client.copy()) for client in self.data_store.clients
-        ), None)
+        """client get all"""
+        self.logger.info({f"Form data: {form_data}"})
 
-        return response(data=clients)
+        return response(data=self.data_store.clients)
 
     def contact_add(self, form_data):
+        """contact add"""
         contact_id = str(a_random_id())
 
         contact_data = form_data.copy()
@@ -217,11 +228,12 @@ class Client(Base):
         self.data_store.contacts.append(contact_data)
         pickle.dump( self.data_store.contacts, open( "fixtures/contact.p", "wb" ) )
 
-        self.logger.info("Contact info added: {}".format(contact_data))
+        self.logger.info(f"Contact info added: {contact_data}")
 
         return response(data=contact_id)
 
     def contact_get(self, form_data):
+        """contact get"""
         if "user_login" in form_data:
             self.logger.info("Looking up contact info by user_login")
             return self._get_contact_response(
@@ -237,6 +249,7 @@ class Client(Base):
         return response(error_code=1, message="No contact ID specified")
 
     def contact_list(self, form_data):
+        """contact list"""
         if "client_id" in form_data:
             self.logger.info("Retrieving contact list by client_id")
             return self._get_all_contacts_response(
@@ -247,10 +260,11 @@ class Client(Base):
         return response(error_code=1, message="No valid client ID specified")
 
     def contact_update(self, form_data):
+        """contact update"""
         contact_id = form_data.get("contact_id")
 
         contact = self._get_contact_from_id(contact_id)
-        self.logger.info("Updating contact {} with {}".format(contact["contact_id"], form_data))
+        self.logger.info(f"Updating contact {contact['contact_id']} with {form_data}")
 
         self._update_if_present(contact, "real_name", form_data, "real_name")
         self._update_if_present(contact, "description", form_data, "description")
@@ -265,15 +279,17 @@ class Client(Base):
         return response(data=True)
 
     def contact_permission_list(self, form_data):
+        """contact permission list"""
         contact_id = form_data.get("contact_id")
         resource_name = form_data.get("resource_name")
         contact = self._get_contact_from_id(contact_id)
 
-        self.logger.info("Gathering permission list for contact_id : {}".format(contact_id))
+        self.logger.info(f"Gathering permission list for contact_id : {contact_id}")
 
         return response(data=contact.get(resource_name, default_permissions))
 
     def contact_permission_set(self, form_data):
+        """contact permission set"""
         contact_id = form_data.get("contact_id")
         resource_name = form_data.get("resource_name")
         action = form_data.get("action")
@@ -306,6 +322,8 @@ class Client(Base):
         return response(data='')
 
     def client_cc_add(self, form_data):
+        """client cc add"""
+        self.logger.info({f"Form data: {form_data}"})
         if isinstance(self.credit_card_response, FakeUbersmithError):
             return response(
                 error_code=self.credit_card_response.code,
@@ -314,6 +332,8 @@ class Client(Base):
         return response(data=self.credit_card_response)
 
     def client_cc_update(self, form_data):
+        """client cc update"""
+        self.logger.info({f"Form data: {form_data}"})
         if isinstance(self.credit_card_response, FakeUbersmithError):
             return response(
                 error_code=self.credit_card_response.code,
@@ -322,6 +342,7 @@ class Client(Base):
         return response(data=True)
 
     def client_cc_info(self, form_data):
+        """client cc info"""
         # returns no error if providing parameters, only an empty list
         if "billing_info_id" in form_data:
             return response(
@@ -346,6 +367,8 @@ class Client(Base):
             )
 
     def client_cc_delete(self, form_data):
+        """client cc delete"""
+        self.logger.info({f"Form data: {form_data}"})
         if isinstance(self.credit_card_delete_response, FakeUbersmithError):
             return response(
                 error_code=self.credit_card_delete_response.code,
@@ -354,10 +377,11 @@ class Client(Base):
         return response(data=True)
 
     def client_metadata_single(self, form_data):
+        """client metadata single"""
         client_id = form_data.get("client_id")
         metadata_name = form_data.get("variable")
 
-        self.logger.info("Gathering metadata {} for client: {}".format(metadata_name, client_id))
+        self.logger.info(f"Gathering metadata {metadata_name} for client: {client_id}")
 
         client_metadata = self.data_store.metadatas.get(client_id)
         if client_metadata is None:
@@ -370,9 +394,11 @@ class Client(Base):
         return response(data=metadata)
 
     def _get_contact_from_id(self, contact_id):
+        """_get contact from id"""
         return next(iter(filter(lambda e: e["contact_id"] == contact_id, self.data_store.contacts)))
 
     def _get_all_contacts_response(self, lookup_key, matcher_key, matcher_value):
+        """_get all contact response"""
         contacts = {
             contact['contact_id']: contact
             for contact in self.data_store.contacts
@@ -380,20 +406,21 @@ class Client(Base):
         }
 
         return response(data=contacts) if contacts else response(
-            error_code=1, message="Invalid {} specified.".format(matcher_key)
+            error_code=1, message=f"Invalid {matcher_key} specified."
         )
 
     def _get_contact_response(self, lookup_key, matcher_key, matcher_value):
+        """_get contact response"""
         contact = next((contact for contact in self.data_store.contacts if contact[lookup_key] == matcher_value), None)
         if contact:
             client = self._client_get(contact["client_id"])
 
-            self.logger.info("Getting contact info: {} for client {}".format(contact, client))
+            self.logger.info(f"Getting contact info: {contact} for client {client}")
 
             return response(data=_format_contact_get(contact, client))
         else:
             return response(
-                error_code=1, message="Invalid {} specified.".format(matcher_key)
+                error_code=1, message=f"Invalid {matcher_key} specified."
             )
 
     def _update_if_present(self, target, target_key, source, source_key):
@@ -402,7 +429,7 @@ class Client(Base):
         except KeyError:
             return
 
-        self.logger.debug("Setting {} to {}".format(target_key, value))
+        self.logger.debug(f"Setting {target_key} to {value}")
         target[target_key] = value
 
     def _update_client_metadata(self, client_id, client_metadata):
@@ -438,7 +465,7 @@ def _format_contact_get(contact, client):
 
 def _format_client_get(client):
     client["listed_company"] = client.get("company", "") \
-                               or "{}, {}".format(client.get("last", ""), client.get("first", ""))
+                or f"{client.get('last', '')}, {client.get('first', '')}"
     return client
 
 

@@ -15,6 +15,7 @@ from collections import defaultdict
 
 
 class DataStore:
+    """data store"""
     def __init__(self):
         self.credit_cards = []
         self.countries = {}
@@ -34,4 +35,5 @@ class DataStore:
         self.metadatas = {}
 
     def flush(self):
+        """flush"""
         self.__init__()

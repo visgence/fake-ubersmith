@@ -1,3 +1,4 @@
+"""uber base"""
 # Copyright 2017 Internap.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +18,7 @@ from fake_ubersmith.api.utils.response import response
 
 
 class Uber(Base):
+    """Uber Base"""
     def __init__(self, data_store):
         super().__init__(data_store)
         self.service_plan_error = None
@@ -48,11 +50,12 @@ class Uber(Base):
         )
 
     def check_login(self, form_data):
+        """check login"""
         data = self._get_login_info(form_data['login'], form_data['pass'])
 
         if data:
 
-            self.logger.info("Login successful. Client info: {}".format(data))
+            self.logger.info(f"Login successful. Client info: {data}")
             return response(data=data)
 
         self.logger.error("Login failed")
@@ -62,6 +65,7 @@ class Uber(Base):
         )
 
     def service_plan_get(self, form_data):
+        """service plan get"""
         if isinstance(self.service_plan_error, FakeUbersmithError):
             self.logger.info("Error retrieving service plan")
             return response(
@@ -78,7 +82,7 @@ class Uber(Base):
         )
 
         if service_plan is not None:
-            self.logger.info("Service plan found: {}".format(service_plan))
+            self.logger.info(f"Service plan found: {service_plan}")
             return response(data=service_plan)
         else:
             self.logger.error("Service plan not found.")
@@ -88,11 +92,10 @@ class Uber(Base):
             )
 
     def service_plan_list(self, form_data):
+        """service plan list"""
         if 'code' in form_data:
             plan_code = form_data['code']
-            self.logger.info("Getting service plans for code: {}".format(
-                plan_code
-            ))
+            self.logger.info(f"Getting service plans for code: {plan_code}")
             return response(
                 data={
                     plan['plan_id']: plan
@@ -104,6 +107,7 @@ class Uber(Base):
         return response(data=self.data_store.service_plans_list)
 
     def acl_admin_role_get(self, form_data):
+        """acl admin role get"""
         user_id = form_data.get('userid')
         role_id = str(form_data.get('role_id', ''))
 
@@ -140,12 +144,13 @@ class Uber(Base):
         return response(data=role_data)
 
     def acl_resource_add(self, form_data):
+        """acl resource add"""
         parent_resource_name = form_data.get('parent_resource_name', '')
         resource_name = form_data.get('resource_name', '')
         label = form_data.get('label', '')
         actions = form_data.get('actions', 'create,read,update,delete')
 
-        self.logger.info("Adding role {}; {}; {}; {}".format(parent_resource_name, resource_name, label, actions))
+        self.logger.info(f"Adding role {parent_resource_name}; {resource_name}; {label}; {actions}")
 
         if not parent_resource_name:
             parent_resource_id = "0"
@@ -154,7 +159,7 @@ class Uber(Base):
             parent_resource = self._find_acl_parent(self.data_store.acl_resources, parent_resource_name)
 
             if parent_resource is None:
-                return response(error_code=1, message="Resource [{}] not found".format(parent_resource_name))
+                return response(error_code=1, message=f"Resource [{parent_resource_name}] not found")
 
             parent_resource_id = parent_resource["resource_id"]
             target_resource_dict = parent_resource["children"]
@@ -176,9 +181,11 @@ class Uber(Base):
         return response(data="")
 
     def acl_resource_list(self, _):
+        """acl resource list"""
         return response(data=self.data_store.acl_resources)
 
     def _get_login_info(self, username, password):
+        """get login info"""
         def _build_payload(id, client_id, contact_id, login, full_name, email, type):
             return {
                 "id": id,
@@ -197,7 +204,7 @@ class Uber(Base):
             return next(
                 (
                     _build_payload(
-                        id="{}-{}".format(c["client_id"], c["contact_id"]),
+                        id=f"{c['client_id']}-{c['contact_id']}",
                         client_id=c["client_id"],
                         contact_id=c["contact_id"],
                         login=c["login"],
@@ -229,6 +236,7 @@ class Uber(Base):
         )
 
     def _find_acl_parent(self, resources, name):
+        """find acl parent"""
         for resource in resources.values():
             if resource["name"] == name:
                 return resource
@@ -240,6 +248,7 @@ class Uber(Base):
         return None
 
     def _to_acl_actions(self, actions_str):
+        """to acl actions"""
         actions = {}
         for action in actions_str.split(","):
             actions.update(_ACL_ACTIONS_MAPPING[action])

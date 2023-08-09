@@ -18,6 +18,7 @@ from flask import current_app
 
 
 class Base(metaclass=ABCMeta):
+    """Base"""
     def __init__(self, data_store=None):
         self.data_store = data_store
         self.app = None
@@ -25,8 +26,10 @@ class Base(metaclass=ABCMeta):
 
     @property
     def logger(self):
+        """logger"""
         return current_app.logger
 
     @abstractmethod
     def hook_to(self, entity):
+        """abstract hook to"""
         pass

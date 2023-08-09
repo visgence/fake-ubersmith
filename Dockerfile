@@ -1,4 +1,4 @@
-FROM python:3.5-alpine
+FROM python:3.8.10-alpine
 
 ENV APP_EXPOSED_PORT 9131
 ENV APP_NAME fake_ubersmith
@@ -9,9 +9,7 @@ EXPOSE $APP_EXPOSED_PORT
 RUN apk add --no-cache --update \
     git \
     curl \
-    py-pip \
-    php \
-    php-json
+    py-pip
 
 COPY requirements.txt $APP_ROOT/
 COPY setup.py $APP_ROOT/
@@ -24,6 +22,6 @@ RUN git init
 
 RUN pip install -r requirements.txt && python setup.py install
 
-HEALTHCHECK --interval=5s CMD curl -X GET --fail http://localhost:$APP_EXPOSED_PORT/status
+HEALTHCHECK --interval=600s CMD curl -X GET --fail http://localhost:$APP_EXPOSED_PORT/status
 
 CMD fake-ubersmith

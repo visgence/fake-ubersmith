@@ -21,6 +21,7 @@ from fake_ubersmith.api.utils.utils import a_random_id
 
 
 class IWeb(Base):
+    """iweb"""
     def __init__(self, data_store):
         super().__init__(data_store)
 
@@ -39,10 +40,12 @@ class IWeb(Base):
         )
 
     def log_event(self, form_data):
+        """log event"""
         self.data_store.event_log.append(form_data.to_dict())
         return response(data="1")
 
     def acl_admin_role_add(self, form_data):
+        """acl admin role add"""
         if self._does_role_name_exist(form_data.get('name')):
             return response(
                 error_code=1,
@@ -70,14 +73,15 @@ class IWeb(Base):
         )
 
     def user_role_assign(self, form_data):
+        """user role assign"""
         user_id = form_data.get('user_id')
         role_id = str(form_data.get('role_id'))
         roles = self.data_store.user_mapping.get(user_id, {}).get('roles', {})
         if role_id in roles:
             return response(
                 error_code=1,
-                message="Can't assign role with id '{}' "
-                        "to user with id '{}'".format(role_id, user_id)
+                message=f"Can't assign role with id '{role_id}' "
+                        "to user with id '{user_id}'"
             )
         self.data_store.user_mapping[user_id]['roles'].add(role_id)
         return response(data=1)

@@ -23,16 +23,19 @@ from fake_ubersmith.api.methods.order import Order
 from fake_ubersmith.api.methods.uber import Uber
 from fake_ubersmith.api.methods.vendor_modules.iweb import IWeb
 from fake_ubersmith.api.ubersmith import UbersmithBase
-from fake_ubersmith.joan.ubersmith_joan import UbersmithJoanBase
+from fake_ubersmith.api.ubersmith_joan import UbersmithJoanBase
+from fake_ubersmith.api.load_fixtures import LoadFixtures
 
 
 class HealthCheckFilter(logging.Filter):
+    """Health Check Fliter"""
 
     def filter(self, record):
         return 'GET /status ' not in record.msg
 
 
 def setup_logging():
+    """setup logging"""
     root_logger = logging.getLogger()
 
     handler = logging.StreamHandler()
@@ -48,6 +51,7 @@ def setup_logging():
 
 
 def run():
+    """run"""
     # TODO (wajdi) Make configurable passed parameter
     port = 9131
 
@@ -58,6 +62,7 @@ def run():
 
     AdministrativeLocal().hook_to(app)
     UbersmithJoanBase(data_store).hook_to(app)
+    LoadFixtures(data_store).hook_to(app)
 
     Uber(data_store).hook_to(base_uber_api)
     Order(data_store).hook_to(base_uber_api)

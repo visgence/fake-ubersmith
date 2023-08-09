@@ -17,6 +17,7 @@ from fake_ubersmith.api.utils.response import response
 
 
 class Order(Base):
+    """Order"""
     def __init__(self, data_store):
         super().__init__(data_store)
 
@@ -43,6 +44,7 @@ class Order(Base):
         )
 
     def coupon_get(self, form_data):
+        """coupon get"""
         coupon = next(
             (
                 cf for cf in self.data_store.coupons
@@ -51,7 +53,7 @@ class Order(Base):
             None
         )
         if coupon is not None:
-            self.logger.info("Retrieved coupon data: {}".format(coupon))
+            self.logger.info(f"Retrieved coupon data: {coupon}")
             return response(data=coupon)
         else:
             self.logger.info("Getting coupon info failed")
@@ -60,21 +62,25 @@ class Order(Base):
             )
 
     def create_order(self, form_data):
+        """create order"""
         order = self.data_store.order.get(form_data['order_queue_id'])
         if isinstance(order, FakeUbersmithError):
             self.logger.info("Creating order failed")
             return response(
                 error_code=order.code, message=order.message
             )
-        self.logger.info("Creating order: {}".format(order))
+        self.logger.info(f"Creating order: {order}")
         return response(data=order)
 
     def order_respond(self, form_data):
+        """order respond"""
+        self.logger.info({f"Form data: {form_data}"})
         data = 8
-        self.logger.info("order response: {}".format(data))
+        self.logger.info(f"order response: {data}")
         return response(data=data)
 
     def submit_order(self, form_data):
+        """submit order"""
         order_submit = self.data_store.order_submit.get(form_data['order_id'])
 
         if isinstance(order_submit, FakeUbersmithError):
@@ -82,15 +88,16 @@ class Order(Base):
             return response(
                 error_code=order_submit.code, message=order_submit.message
             )
-        self.logger.info("Order submitted info: {}".format(order_submit))
+        self.logger.info(f"Order submitted info: {order_submit}")
         return response(data=order_submit)
 
     def cancel_order(self, form_data):
+        """cancel order"""
         order_cancel = self.data_store.order_cancel.get(form_data['order_id'])
         if isinstance(order_cancel, FakeUbersmithError):
             self.logger.error("Cancel order failed.")
             return response(
                 error_code=order_cancel.code, message=order_cancel.message
             )
-        self.logger.info("Cancelling order info: {}".format(order_cancel))
+        self.logger.info(f"Cancelling order info: {order_cancel}")
         return response(data=order_cancel)
